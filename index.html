@@ -1,1 +1,717 @@
-i
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Ultimate Challenge Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            overflow-x: hidden;
+        }
+        .quiz-container {
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            padding: 2rem;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            transition: all 0.5s ease-in-out;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .quiz-container.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .option-button {
+            background-color: #e2e8f0;
+            color: #334155;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            text-align: left;
+            width: 100%;
+            font-size: 1.1rem;
+            border: 1px solid transparent;
+        }
+        .option-button:hover:not(.disabled) {
+            background-color: #cbd5e1;
+            transform: translateY(-2px);
+        }
+        .option-button.correct {
+            background-color: #d1fae5;
+            color: #065f46;
+            border-color: #34d399;
+        }
+        .option-button.incorrect {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border-color: #ef4444;
+        }
+        .option-button.disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        #timer-bar {
+            transition: width 1s linear; /* Animate width change over 1 second */
+        }
+        .time-low-pulse {
+             background-image: linear-gradient(to right, #ef4444, #b91c1c);
+             animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        .score-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background-color: #f8fafc;
+            border-radius: 1.5rem;
+            margin-top: 2rem;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            opacity: 0;
+            transform: scale(0.9);
+            transition: all 0.5s ease-in-out;
+        }
+        .score-card.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .score-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1.5rem;
+        }
+        .start-button {
+            background-color: #4f46e5;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .start-button:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+        }
+        .start-button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        .social-share-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .social-share-buttons button {
+            background-color: #6b7280;
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.3s ease;
+        }
+        .social-share-buttons button:hover {
+            background-color: #4b5563;
+        }
+        .social-share-buttons .whatsapp { background-color: #25D366; }
+        .social-share-buttons .whatsapp:hover { background-color: #1DA851; }
+        .social-share-buttons .facebook { background-color: #1877F2; }
+        .social-share-buttons .facebook:hover { background-color: #145CB3; }
+        .social-share-buttons .pinterest { background-color: #E60023; }
+        .social-share-buttons .pinterest:hover { background-color: #B3001C; }
+        .social-share-buttons .teams { background-color: #6264A7; }
+        .social-share-buttons .teams:hover { background-color: #4A4C84; }
+
+        .challenge-info {
+            background-color: #e0f2fe;
+            border: 1px solid #90cdf4;
+            color: #2c5282;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.75rem;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+        @media (max-width: 640px) {
+            .quiz-container { padding: 1.5rem; }
+            .option-button { font-size: 1rem; padding: 0.6rem 1rem; }
+            .score-icon { width: 60px; height: 60px; }
+            .start-button { padding: 0.8rem 1.5rem; font-size: 1.1rem; }
+            .social-share-buttons { flex-wrap: wrap; }
+            .social-share-buttons button { width: calc(50% - 0.5rem); justify-content: center; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div id="quiz-app" class="quiz-container show">
+        <div id="start-screen" class="text-center">
+            <h1 class="text-4xl font-bold text-gray-800 mb-6">The Ultimate Challenge Quiz</h1>
+            <p class="text-lg text-gray-600 mb-4">Ready to test your knowledge against the clock? Let's begin!</p>
+            <input type="text" id="user-name-input" class="input-field" placeholder="Enter your name to start" maxlength="30">
+            <button id="start-button" class="start-button">Start Quiz</button>
+        </div>
+
+        <div id="challenge-intro-screen" class="hidden text-center">
+            <h1 class="text-4xl font-bold text-gray-800 mb-6">Challenge Accepted!</h1>
+            <div class="challenge-info">
+                <p class="mb-2">You are challenging <span id="challenger-name-display" class="font-bold"></span>'s score of <span id="challenger-score-display" class="font-bold"></span> out of 20.</p>
+                <p class="mb-4">Enter your name to take on the challenge!</p>
+                <input type="text" id="challenger-name-input" class="input-field" placeholder="Your name" maxlength="30">
+            </div>
+            <button id="start-challenge-button" class="start-button">Start Challenge</button>
+        </div>
+
+        <div id="quiz-screen" class="hidden">
+            <div id="quiz-header" class="mb-6">
+                 <div class="flex justify-between items-center text-gray-600 mb-2">
+                    <p id="question-count" class="text-sm font-semibold">Question 1 of 20</p>
+                    <p id="timer-text" class="text-sm font-semibold">Time: 20s</p>
+                </div>
+                <div id="timer-container" class="w-full bg-gray-200 rounded-full h-2.5">
+                     <div id="timer-bar" class="bg-gradient-to-r from-indigo-500 to-blue-500 h-2.5 rounded-full" style="width: 100%;"></div>
+                </div>
+            </div>
+            <h2 id="question-text" class="text-2xl font-semibold text-gray-900 mb-8 leading-relaxed"></h2>
+            <div id="options-container" class="grid grid-cols-1 gap-4"></div>
+        </div>
+
+        <div id="score-card" class="score-card hidden">
+            <div id="score-icon-display" class="score-icon"></div>
+            <h3 id="score-text" class="text-3xl font-bold text-gray-800 mb-4"></h3>
+            <p id="score-review" class="text-lg text-gray-600 mb-8"></p>
+            <div id="challenge-outcome-message" class="text-xl font-semibold text-blue-700 mb-4 hidden"></div>
+            <div class="flex flex-col items-center gap-4">
+                <button id="restart-button" class="start-button">Play Again</button>
+                <div id="share-section" class="w-full">
+                    <p class="text-gray-700 font-semibold mb-2">Share your score and challenge others!</p>
+                    <div class="social-share-buttons">
+                        <button id="share-whatsapp" class="whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                        <button id="share-facebook" class="facebook"><i class="fab fa-facebook-f"></i> Facebook</button>
+                        <button id="share-pinterest" class="pinterest"><i class="fab fa-pinterest-p"></i> Pinterest</button>
+                        <button id="share-teams" class="teams"><i class="fab fa-microsoftteams"></i> Teams</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Fallback for crypto.randomUUID() ---
+        function generateUUID() {
+            if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                return crypto.randomUUID();
+            }
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // --- Quiz Questions Data (100 Questions) ---
+        const allQuestions = [
+            // Introduction to Work Teams (15 Questions)
+            { question: "What is the primary definition of a work team?", options: ["A group of people in the same building", "People working together to reach a common goal", "Individuals reporting to the same manager", "A collection of employees with similar job titles"], correctAnswer: 1, topic: "Introduction" },
+            { question: "The main purpose of forming a team is to achieve a...", options: ["Social gathering", "Common goal", "Hierarchical structure", "Personal objective"], correctAnswer: 1, topic: "Introduction" },
+            { question: "Which of the following is essential for a group to be considered a team?", options: ["Having identical skills", "Working in isolation", "A shared objective", "Being in the same physical location"], correctAnswer: 2, topic: "Introduction" },
+            { question: "The success of a team is most dependent on...", options: ["Individual brilliance", "The number of people", "Effective collaboration", "The team's name"], correctAnswer: 2, topic: "Introduction" },
+            { question: "What distinguishes a work team from a work group?", options: ["A team has a common goal and mutual accountability", "A group is always larger than a team", "Teams are temporary, groups are permanent", "There is no difference"], correctAnswer: 0, topic: "Introduction" },
+            { question: "A 'common goal' in a team context means...", options: ["Everyone has the same personal ambition", "The team is working towards a single, shared outcome", "The manager sets individual tasks", "Everyone performs the same function"], correctAnswer: 1, topic: "Introduction" },
+            { question: "Which phrase best describes teamwork?", options: ["Doing your own work quietly", "Following orders without question", "Collaborative effort to achieve a shared objective", "Competing with colleagues for the best results"], correctAnswer: 2, topic: "Introduction" },
+            { question: "What is a key benefit of working in a team?", options: ["Less individual responsibility", "Synergy, where the collective output exceeds individual efforts", "Fewer meetings", "Guaranteed success"], correctAnswer: 1, topic: "Introduction" },
+            { question: "A team's foundation is built on...", options: ["A common purpose", "Strict rules", "Individual competition", "A single leader making all decisions"], correctAnswer: 0, topic: "Introduction" },
+            { question: "When people work together effectively, they form a...", options: ["Committee", "Crowd", "Team", "Department"], correctAnswer: 2, topic: "Introduction" },
+            { question: "A team without a common goal is just a...", options: ["Highly effective unit", "Group of individuals", "Self-managed team", "Project team"], correctAnswer: 1, topic: "Introduction" },
+            { question: "The essence of a team is...", options: ["Hierarchy", "Shared purpose", "Individual assignments", "Uniformity of thought"], correctAnswer: 1, topic: "Introduction" },
+            { question: "To achieve a common goal, team members must...", options: ["Work independently", "Communicate and collaborate", "Always agree with each other", "Have the same background"], correctAnswer: 1, topic: "Introduction" },
+            { question: "What is the most critical element for team success?", options: ["A large budget", "A shared understanding of the goal", "A new office", "Advanced technology"], correctAnswer: 1, topic: "Introduction" },
+            { question: "A team is a group of people with complementary skills who are committed to a...", options: ["Common purpose and performance goals", "Strict deadline", "Manager's agenda", "Set of individual tasks"], correctAnswer: 0, topic: "Introduction" },
+            // Types of Work Teams (30 Questions)
+            { question: "A team composed of all finance officers in a company is an example of a...", options: ["Project Team", "Functional Team", "Task Force", "Self-managed Team"], correctAnswer: 1, topic: "Team Types" },
+            { question: "Which team is formed for a specific task and disbands upon completion?", options: ["Functional Team", "Project Team", "Troubleshooting Team", "Inter-working Team"], correctAnswer: 1, topic: "Team Types" },
+            { question: "An IT, HR, and Operations team collaborating to plan a new training system is a...", options: ["Functional Team", "Task Force", "Project Team", "Inter-working Team"], correctAnswer: 3, topic: "Team Types" },
+            { question: "What is the primary role of a Troubleshooting Team?", options: ["To manage a department", "To find solutions to a specific, existing issue", "To develop new products", "To handle daily operations"], correctAnswer: 1, topic: "Team Types" },
+            { question: "A production line team that handles its own quality control without a formal boss is a...", options: ["Functional Team", "Project Team", "Self-managed Team", "Task Force"], correctAnswer: 2, topic: "Team Types" },
+            { question: "Which team is characterized by being emergency-focused, fast, and effective?", options: ["Project Team", "Functional Team", "Inter-working Team", "Task Force"], correctAnswer: 3, topic: "Team Types" },
+            { question: "A team created to investigate why a product's packaging is consistently defective is a...", options: ["Self-managed Team", "Troubleshooting Team", "Functional Team", "Project Team"], correctAnswer: 1, topic: "Team Types" },
+            { question: "If members are from the same department and perform similar work, they are in a...", options: ["Inter-working Team", "Project Team", "Functional Team", "Task Force"], correctAnswer: 2, topic: "Team Types" },
+            { question: "A team assembled to handle an urgent chemical spill in a factory is a...", options: ["Project Team", "Task Force", "Self-managed Team", "Functional Team"], correctAnswer: 1, topic: "Team Types" },
+            { question: "Which team type is defined by its cross-departmental collaboration to solve problems creatively?", options: ["Functional Team", "Inter-working Team", "Troubleshooting Team", "Project Team"], correctAnswer: 1, topic: "Team Types" },
+            { question: "The key feature of a Self-managed Team is...", options: ["Having a strong, formal leader", "Being temporary", "Autonomy and self-governance", "Focusing on a single problem"], correctAnswer: 2, topic: "Team Types" },
+            { question: "A 'Project Team' has a...", options: ["Permanent role", "Specific, temporary goal", "Focus on departmental tasks", "Lack of a clear objective"], correctAnswer: 1, topic: "Team Types" },
+            { question: "A team of the 'best experts' brought together for an urgent issue is a...", options: ["Functional Team", "Task Force", "Self-managed Team", "Inter-working Team"], correctAnswer: 1, topic: "Team Types" },
+            { question: "The defining characteristic of a Functional Team is its focus on...", options: ["A specific project", "A specific department's work", "An emergency", "Self-management"], correctAnswer: 1, topic: "Team Types" },
+            { question: "Which team is NOT necessarily problem-focused but task-focused towards a specific deliverable?", options: ["Troubleshooting Team", "Task Force", "Project Team", "Inter-working Team"], correctAnswer: 2, topic: "Team Types" },
+            { question: "The Welfare Team at DTI, if it handles urgent employee needs, acts as a...", options: ["Functional Team", "Task Force", "Project Team", "Self-managed Team"], correctAnswer: 1, topic: "Team Types" },
+            { question: "A group of machine operators organizing their own work schedules and quality checks is a...", options: ["Functional Team", "Project Team", "Self-managed Team", "Troubleshooting Team"], correctAnswer: 2, topic: "Team Types" },
+            { question: "What is a primary difference between a Project Team and a Functional Team?", options: ["Project teams are permanent, Functional teams are temporary", "Project teams are temporary, Functional teams are often permanent", "Only Functional teams have leaders", "Only Project teams have goals"], correctAnswer: 1, topic: "Team Types" },
+            { question: "Which team type is most associated with innovation and creative problem-solving?", options: ["Functional Team", "Inter-working Team", "Troubleshooting Team", "Task Force"], correctAnswer: 1, topic: "Team Types" },
+            { question: "A 'Troubleshooting Team' typically...", options: ["Implements the solution themselves", "Identifies the problem and suggests solutions", "Manages the entire company", "Works on long-term strategy"], correctAnswer: 1, topic: "Team Types" },
+            { question: "The autonomy of a Self-managed Team means they...", options: ["Report to multiple managers", "Make many of their own decisions", "Ignore company policies", "Only work on one task"], correctAnswer: 1, topic: "Team Types" },
+            { question: "A team building a new website for a client is a classic example of a...", options: ["Functional Team", "Project Team", "Task Force", "Self-managed Team"], correctAnswer: 1, topic: "Team Types" },
+            { question: "If a company forms a team to decide on a new logo, it is a...", options: ["Functional Team", "Project Team", "Troubleshooting Team", "Task Force"], correctAnswer: 1, topic: "Team Types" },
+            { question: "A key characteristic of a Task Force is...", options: ["Its slow, deliberate pace", "Its long-term nature", "Its speed and focus on an urgent issue", "Its lack of a clear leader"], correctAnswer: 2, topic: "Team Types" },
+            { question: "Which team brings together diverse perspectives from different parts of the organization?", options: ["Functional Team", "Inter-working Team", "Troubleshooting Team", "Self-managed Team"], correctAnswer: 1, topic: "Team Types" },
+            { question: "A team that exists to support the ongoing operations of a single department is a...", options: ["Project Team", "Functional Team", "Task Force", "Inter-working Team"], correctAnswer: 1, topic: "Team Types" },
+            { question: "What type of team is most suitable for a short-term, high-stakes problem?", options: ["Functional Team", "Task Force", "Self-managed Team", "Project Team"], correctAnswer: 1, topic: "Team Types" },
+            { question: "Which team disbands after its goal is met?", options: ["Functional Team", "Project Team", "Self-managed Team", "A and B"], correctAnswer: 1, topic: "Team Types" },
+            { question: "In the DTI example, the Academics and Finance team collaborating is an example of...", options: ["A Functional Team", "An Inter-working Team", "A Task Force", "A Self-managed Team"], correctAnswer: 1, topic: "Team Types" },
+            { question: "Empowerment is a key ingredient for the success of which team type?", options: ["Functional Team", "Task Force", "Self-managed Team", "Troubleshooting Team"], correctAnswer: 2, topic: "Team Types" },
+            // Stages of Team Development (25 Questions)
+            { question: "What are the five stages of Tuckman's Model in order?", options: ["Forming, Storming, Norming, Performing, Adjourning", "Starting, Arguing, Agreeing, Working, Leaving", "Forming, Norming, Storming, Performing, Adjourning", "Introduction, Conflict, Resolution, Production, Conclusion"], correctAnswer: 0, topic: "Development Stages" },
+            { question: "In which stage are team members often polite and unclear about their roles?", options: ["Storming", "Norming", "Forming", "Performing"], correctAnswer: 2, topic: "Development Stages" },
+            { question: "Conflict and competition are most common in which stage?", options: ["Forming", "Storming", "Norming", "Adjourning"], correctAnswer: 1, topic: "Development Stages" },
+            { question: "When a team starts to agree on standards and establish norms, it is in the...", options: ["Forming", "Storming", "Norming", "Performing"], correctAnswer: 2, topic: "Development Stages" },
+            { question: "The team is working efficiently and achieving its goals in the... stage.", options: ["Norming", "Storming", "Performing", "Forming"], correctAnswer: 2, topic: "Development Stages" },
+            { question: "The final stage, where the team celebrates and disbands, is called...", options: ["Performing", "Forming", "Concluding", "Adjourning"], correctAnswer: 3, topic: "Development Stages" },
+            { question: "A team for a new healthcare app has just had its first meeting. Roles are unclear. This is...", options: ["Storming", "Forming", "Norming", "Performing"], correctAnswer: 1, topic: "Development Stages" },
+            { question: "If the app team starts having conflicts over the design and features, they have entered the... stage.", options: ["Forming", "Storming", "Norming", "Adjourning"], correctAnswer: 1, topic: "Development Stages" },
+            { question: "The healthcare app team finally agrees on a design standard and work process. This is the... stage.", options: ["Forming", "Storming", "Norming", "Performing"], correctAnswer: 2, topic: "Development Stages" },
+            { question: "A leader's role in the 'Forming' stage is to...", options: ["Step back and observe", "Provide clear direction and guidance", "Mediate conflicts", "Celebrate success"], correctAnswer: 1, topic: "Development Stages" },
+            { question: "During the 'Storming' stage, a leader should...", options: ["Ignore the conflict", "Facilitate communication and help resolve conflicts", "Assign more tasks", "Disband the team"], correctAnswer: 1, topic: "Development Stages" },
+            { question: "What is the main risk of the 'Storming' stage?", options: ["The team becomes too friendly", "The team may fail if conflicts are not resolved", "The work is completed too quickly", "The team loses focus on the goal"], correctAnswer: 1, topic: "Development Stages" },
+            { question: "Cohesion and unity start to build in the... stage.", options: ["Forming", "Storming", "Norming", "Adjourning"], correctAnswer: 2, topic: "Development Stages" },
+            { question: "The 'Performing' stage is characterized by...", options: ["High levels of conflict", "Uncertainty", "High performance and synergy", "The start of the project"], correctAnswer: 2, topic: "Development Stages" },
+            { question: "Why is the 'Adjourning' stage important?", options: ["It allows for recognition and closure", "It is when the work begins", "It is where conflicts are resolved", "It is the longest stage"], correctAnswer: 0, topic: "Development Stages" },
+            { question: "Which stage is also known as the 'getting to know you' stage?", options: ["Storming", "Norming", "Forming", "Performing"], correctAnswer: 2, topic: "Development Stages" },
+            { question: "A team that skips the 'Storming' stage might...", options: ["Be more effective", "Suffer from unresolved underlying conflicts later", "Finish the project faster", "Not need a leader"], correctAnswer: 1, topic: "Development Stages" },
+            { question: "In which stage does the team structure become fully functional and accepted?", options: ["Forming", "Storming", "Norming", "Performing"], correctAnswer: 3, topic: "Development Stages" },
+            { question: "A sense of loss or sadness can be common in the... stage.", options: ["Forming", "Storming", "Performing", "Adjourning"], correctAnswer: 3, topic: "Development Stages" },
+            { question: "The transition from 'Storming' to 'Norming' involves...", options: ["Creating more conflict", "Resolving differences and establishing norms", "Starting the project", "Ending the project"], correctAnswer: 1, topic: "Development Stages" },
+            { question: "A team is 'mature' and self-directing in the... stage.", options: ["Forming", "Norming", "Performing", "Storming"], correctAnswer: 2, topic: "Development Stages" },
+            { question: "What is the primary focus during the 'Forming' stage?", options: ["Task completion", "Building relationships and understanding the task", "Resolving conflict", "Celebrating achievements"], correctAnswer: 1, topic: "Development Stages" },
+            { question: "The 'Norming' stage is a result of the team's willingness to...", options: ["Give up on the goal", "Share responsibility and work together", "Ignore the leader", "Create more conflict"], correctAnswer: 1, topic: "Development Stages" },
+            { question: "Not all teams go through Tuckman's stages linearly. This statement is...", options: ["True", "False"], correctAnswer: 0, topic: "Development Stages" },
+            { question: "Tuckman's model helps teams to...", options: ["Avoid all conflict", "Understand their own development process", "Guarantee project success", "Work without a leader"], correctAnswer: 1, topic: "Development Stages" },
+            // Leadership, Empowerment, and Communication (25 Questions)
+            { question: "During a period of change, what is a leader's most important role?", options: ["To increase the workload", "To give clear direction and explain 'why'", "To keep information secret", "To avoid the team"], correctAnswer: 1, topic: "Leadership" },
+            { question: "Which of these is NOT one of the 5 things a good leader does during change?", options: ["Motivate the team", "Provide support and training", "Micromanage every task", "Communicate openly"], correctAnswer: 2, topic: "Leadership" },
+            { question: "Empowerment means...", options: ["Telling employees exactly what to do", "Trusting employees to make smart decisions", "Removing all rules", "Giving employees more work"], correctAnswer: 1, topic: "Empowerment" },
+            { question: "A leader who says 'Well done!' for effort is...", options: ["Providing support", "Giving clear direction", "Recognizing effort", "Communicating openly"], correctAnswer: 2, topic: "Leadership" },
+            { question: "Good communication in a team involves...", options: ["Cutting each other off to be more efficient", "Listening to understand, not just to reply", "Using complex jargon", "Communicating only through email"], correctAnswer: 1, topic: "Communication" },
+            { question: "The story about the misunderstood email highlights the importance of...", options: ["Writing longer emails", "Clear communication", "Avoiding email altogether", "Working in silence"], correctAnswer: 1, topic: "Communication" },
+            { question: "What is a key part of communicating openly?", options: ["Ignoring concerns", "Answering questions honestly", "Making promises you can't keep", "Sharing only good news"], correctAnswer: 1, topic: "Leadership" },
+            { question: "When a leader empowers a team, they show...", options: ["Distrust", "Control", "Trust", "Apathy"], correctAnswer: 2, topic: "Empowerment" },
+            { question: "Motivating the team during change helps to...", options: ["Increase fear and uncertainty", "Keep the team calm and focused", "Create more conflict", "Slow down the process"], correctAnswer: 1, topic: "Leadership" },
+            { question: "Listening to understand' means...", options: ["Waiting for your turn to speak", "Trying to genuinely grasp the other person's perspective", "Thinking about your reply while someone is talking", "Interrupting with questions"], correctAnswer: 1, topic: "Communication" },
+            { question: "A leader providing training for a new system is fulfilling which role?", options: ["Giving direction", "Providing support", "Recognizing effort", "Motivating"], correctAnswer: 1, topic: "Leadership" },
+            { question: "Empowerment can lead to...", options: ["More bureaucracy", "Increased employee engagement and better decisions", "Slower project completion", "Less need for a leader"], correctAnswer: 1, topic: "Empowerment" },
+            { question: "A leader who explains 'what's changing and why' is...", options: ["Giving clear direction", "Recognizing effort", "Providing support", "Empowering the team"], correctAnswer: 0, topic: "Leadership" },
+            { question: "Good communication can prevent...", options: ["The need for a leader", "Misunderstandings and delays", "Teamwork", "Change"], correctAnswer: 1, topic: "Communication" },
+            { question: "What is the opposite of empowerment?", options: ["Trust", "Micromanagement", "Delegation", "Autonomy"], correctAnswer: 1, topic: "Empowerment" },
+            { question: "A good leader during change acts as a...", options: ["Source of confusion", "Stabilizing force", "Dictator", "Passive observer"], correctAnswer: 1, topic: "Leadership" },
+            { question: "Being clear when you give instructions is a key part of...", options: ["Effective communication", "Empowerment", "Recognizing effort", "Leadership style"], correctAnswer: 0, topic: "Communication" },
+            { question: "Trust is the foundation of...", options: ["Conflict", "Micromanagement", "Empowerment", "Bureaucracy"], correctAnswer: 2, topic: "Empowerment" },
+            { question: "Answering questions honestly builds...", options: ["Fear", "Trust and open communication", "Confusion", "Hierarchy"], correctAnswer: 1, topic: "Communication" },
+            { question: "The phrase 'I trust you to take the shot' is an analogy for...", options: ["Leadership", "Teamwork", "Empowerment", "Communication"], correctAnswer: 2, topic: "Empowerment" },
+            { question: "What is the likely result of a leader who does NOT communicate openly during change?", options: ["Increased trust", "Rumors and anxiety", "Higher motivation", "Faster adaptation"], correctAnswer: 1, topic: "Leadership" },
+            { question: "Which action is a form of providing support?", options: ["Setting unrealistic goals", "Offering resources and training", "Ignoring questions", "Punishing mistakes"], correctAnswer: 1, topic: "Leadership" },
+            { question: "Empowerment allows team members to take...", options: ["More breaks", "Ownership of their work", "Blame for everything", "Instructions literally"], correctAnswer: 1, topic: "Empowerment" },
+            { question: "Active listening is a crucial skill for...", options: ["Poor communication", "Effective teamwork", "Creating conflict", "Individual work"], correctAnswer: 1, topic: "Communication" },
+            { question: "A leader's role in change is to guide the team...", options: ["Away from the goal", "Through the uncertainty", "Into more conflict", "By doing all the work themselves"], correctAnswer: 1, topic: "Leadership" },
+            // Team Dynamics and Potential Questions (5 Questions)
+            { question: "How people act, talk, and help each other within a team is called...", options: ["Team Rules", "Team Dynamics", "Team Structure", "Team Hierarchy"], correctAnswer: 1, topic: "Team Dynamics" },
+            { question: "A team member who is great at finishing things plays the role of a...", options: ["Innovator", "Encourager", "Leader", "Completer"], correctAnswer: 3, topic: "Team Dynamics" },
+            { question: "The person who has wild ideas and suggests new ways of doing things is the...", options: ["Completer", "Innovator", "Encourager", "Mediator"], correctAnswer: 1, topic: "Team Dynamics" },
+            { question: "Which role helps to keep the peace and maintain team harmony?", options: ["Innovator", "Completer", "Encourager", "Director"], correctAnswer: 2, topic: "Team Dynamics" },
+            { question: "For a team to be effective, it is most important that...", options: ["All members have the same personality", "Members understand and leverage their different roles", "The team avoids all disagreement", "There is a strict leader"], correctAnswer: 1, topic: "Team Dynamics" },
+        ];
+
+        let questionsToAsk = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        const totalQuestionsPerSession = 20;
+        let userName = "Guest";
+        let currentShareId = null;
+        let challengedShareId = null;
+        let challengedSharerName = null;
+        let challengedSharerScore = null;
+        let timerInterval;
+        let timeLeft = 20;
+
+        // --- DOM Elements ---
+        const startScreen = document.getElementById('start-screen');
+        const userNameInput = document.getElementById('user-name-input');
+        const challengeIntroScreen = document.getElementById('challenge-intro-screen');
+        const challengerNameDisplay = document.getElementById('challenger-name-display');
+        const challengerScoreDisplay = document.getElementById('challenger-score-display');
+        const challengerNameInput = document.getElementById('challenger-name-input');
+        const startChallengeButton = document.getElementById('start-challenge-button');
+        const quizScreen = document.getElementById('quiz-screen');
+        const scoreCard = document.getElementById('score-card');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const questionCountDisplay = document.getElementById('question-count');
+        const timerText = document.getElementById('timer-text');
+        const timerBar = document.getElementById('timer-bar');
+        const scoreTextEl = document.getElementById('score-text');
+        const scoreReview = document.getElementById('score-review');
+        const scoreIconDisplay = document.getElementById('score-icon-display');
+        const quizAppContainer = document.getElementById('quiz-app');
+        const shareWhatsappButton = document.getElementById('share-whatsapp');
+        const shareFacebookButton = document.getElementById('share-facebook');
+        const sharePinterestButton = document.getElementById('share-pinterest');
+        const shareTeamsButton = document.getElementById('share-teams');
+        const shareSection = document.getElementById('share-section');
+        const challengeOutcomeMessage = document.getElementById('challenge-outcome-message');
+
+
+        // --- SVG Icons for score card ---
+        const scoreIcons = {
+            trophy: `<svg class="score-icon text-amber-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 001.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"></path></svg>`,
+            medal: `<svg class="score-icon text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>`,
+            star: `<svg class="score-icon text-yellow-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>`,
+            brain: `<svg class="score-icon text-pink-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 3.5a5.5 5.5 0 00-5.5 5.5c0 1.258.468 2.41 1.25 3.317V17.5a.5.5 0 00.5.5h7.5a.5.5 0 00.5-.5v-5.183c.782-.907 1.25-2.06 1.25-3.317A5.5 5.5 0 0010 3.5zM8.5 12.5a.5.5 0 01-.5-.5V11a.5.5 0 011 0v1a.5.5 0 01-.5.5zm3 0a.5.5 0 01-.5-.5V11a.5.5 0 011 0v1a.5.5 0 01-.5.5z"></path><path d="M10 2a1 1 0 00-1 1v.5a.5.5 0 001 0V3a1 1 0 00-1-1z"></path></svg>`,
+            book: `<svg class="score-icon text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 11-2 0V4a1 1 0 00-1-1H7a1 1 0 00-1 1v12a1 1 0 11-2 0V4z" clip-rule="evenodd"></path></svg>`
+        };
+
+        // --- Utility Functions ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function showModalMessage(message) {
+            const modal = document.createElement('div');
+            modal.classList.add('fixed', 'inset-0', 'bg-gray-800', 'bg-opacity-75', 'flex', 'items-center', 'justify-center', 'z-50', 'p-4');
+            modal.innerHTML = `
+                <div class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm mx-auto">
+                    <p class="text-lg font-semibold mb-4">${message}</p>
+                    <button class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" onclick="this.parentNode.parentNode.remove()">OK</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // --- Quiz Flow Functions ---
+        function startGame(isChallenge = false) {
+            let nameInputSource = isChallenge ? challengerNameInput : userNameInput;
+            userName = nameInputSource.value.trim();
+
+            if (!userName) {
+                showModalMessage("Please enter your name to start the quiz!");
+                return;
+            }
+            if (userName.length > 30) {
+                showModalMessage("Name cannot exceed 30 characters.");
+                return;
+            }
+
+            currentQuestionIndex = 0;
+            score = 0;
+            currentShareId = null;
+            challengeOutcomeMessage.classList.add('hidden');
+
+            shuffleArray(allQuestions);
+            questionsToAsk = allQuestions.slice(0, totalQuestionsPerSession);
+
+            startScreen.classList.add('hidden');
+            challengeIntroScreen.classList.add('hidden');
+            scoreCard.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            quizAppContainer.classList.add('show');
+
+            displayQuestion();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval); // Clear any existing timer
+            timeLeft = 20;
+            
+            // Initial UI update
+            timerText.textContent = `Time: ${timeLeft}s`;
+            timerBar.style.width = '100%';
+            timerBar.classList.remove('time-low-pulse', 'bg-red-500');
+            timerBar.classList.add('bg-gradient-to-r', 'from-indigo-500', 'to-blue-500');
+
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerText.textContent = `Time: ${timeLeft}s`;
+                const percentageLeft = (timeLeft / 20) * 100;
+                timerBar.style.width = `${percentageLeft}%`;
+
+                if (timeLeft <= 5 && !timerBar.classList.contains('time-low-pulse')) {
+                    timerBar.classList.remove('bg-gradient-to-r', 'from-indigo-500', 'to-blue-500');
+                    timerBar.classList.add('time-low-pulse', 'bg-red-500');
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeout();
+                }
+            }, 1000);
+        }
+        
+        function handleTimeout() {
+            disableOptions(null); // Pass null as there's no selected button
+            moveToNextQuestion();
+        }
+
+        function disableOptions(selectedButton) {
+            const buttons = optionsContainer.querySelectorAll('.option-button');
+            const correctAnswerText = questionsToAsk[currentQuestionIndex].options[questionsToAsk[currentQuestionIndex].correctAnswer];
+
+            buttons.forEach(button => {
+                button.classList.add('disabled', 'opacity-70');
+                button.onclick = null;
+                
+                // Show correct answer if the choice was wrong or timed out
+                if (button.textContent === correctAnswerText) {
+                    button.classList.add('correct');
+                } else if (button === selectedButton) {
+                    button.classList.add('incorrect');
+                }
+            });
+        }
+
+        function moveToNextQuestion() {
+            questionText.style.opacity = '0';
+            optionsContainer.style.opacity = '0';
+            setTimeout(() => {
+                currentQuestionIndex++;
+                displayQuestion();
+            }, 1500); // Wait 1.5 seconds before showing the next question
+        }
+
+        function displayQuestion() {
+            if (currentQuestionIndex < totalQuestionsPerSession) {
+                startTimer();
+                const question = questionsToAsk[currentQuestionIndex];
+                
+                const shuffledOptions = [...question.options];
+                shuffleArray(shuffledOptions);
+
+                questionText.textContent = question.question;
+                optionsContainer.innerHTML = '';
+
+                shuffledOptions.forEach(optionText => {
+                    const button = document.createElement('button');
+                    button.classList.add('option-button');
+                    button.textContent = optionText;
+                    button.onclick = () => selectAnswer(button);
+                    optionsContainer.appendChild(button);
+                });
+
+                questionCountDisplay.textContent = `Question ${currentQuestionIndex + 1} of ${totalQuestionsPerSession}`;
+
+                questionText.style.opacity = '0';
+                optionsContainer.style.opacity = '0';
+                setTimeout(() => {
+                    questionText.style.transition = 'opacity 0.5s ease-in-out';
+                    optionsContainer.style.transition = 'opacity 0.5s ease-in-out';
+                    questionText.style.opacity = '1';
+                    optionsContainer.style.opacity = '1';
+                }, 50);
+            } else {
+                showScoreCard();
+            }
+        }
+        
+        function selectAnswer(selectedButton) {
+            clearInterval(timerInterval); // Stop the timer
+            
+            const correctAnswerText = questionsToAsk[currentQuestionIndex].options[questionsToAsk[currentQuestionIndex].correctAnswer];
+            const isCorrect = selectedButton.textContent === correctAnswerText;
+
+            if (isCorrect) {
+                score++;
+            }
+            // The disableOptions function will handle marking correct/incorrect
+            disableOptions(selectedButton);
+            
+            moveToNextQuestion();
+        }
+
+        function showScoreCard() {
+            quizScreen.classList.add('hidden');
+            scoreCard.classList.remove('hidden');
+            scoreCard.classList.add('show');
+            shareSection.classList.remove('hidden');
+
+            const scorePercentage = (score / totalQuestionsPerSession) * 100;
+            scoreTextEl.textContent = `${userName}, you scored ${score} out of ${totalQuestionsPerSession}!`;
+
+            let reviewMessage = '';
+            let iconSvg = '';
+
+            if (scorePercentage === 100) {
+                reviewMessage = "Flawless Victory! You've mastered the material. You're ready for any challenge!";
+                iconSvg = scoreIcons.trophy;
+            } else if (scorePercentage >= 90) {
+                reviewMessage = "Outstanding! You have an expert-level grasp of these topics. Well done!";
+                iconSvg = scoreIcons.medal;
+            } else if (scorePercentage >= 75) {
+                reviewMessage = "Excellent work! Your knowledge is impressive. Keep up the great momentum!";
+                iconSvg = scoreIcons.star;
+            } else if (scorePercentage >= 50) {
+                reviewMessage = "Good job! You're on the right track. A little more practice and you'll be an expert.";
+                iconSvg = scoreIcons.brain;
+            } else {
+                reviewMessage = "Nice try! This was great practice. Keep reviewing the topics to be fully prepared for the real test on paper.";
+                iconSvg = scoreIcons.book;
+            }
+
+            scoreReview.textContent = reviewMessage;
+            scoreIconDisplay.innerHTML = iconSvg;
+
+            if (challengedShareId && challengedSharerName && challengedSharerScore !== null) {
+                handleChallengeOutcome();
+            } else {
+                saveScoreForSharing();
+            }
+        }
+        
+        function handleChallengeOutcome() {
+            shareSection.classList.add('hidden');
+            challengeOutcomeMessage.classList.remove('hidden');
+            let outcomeText = "";
+            if (score > challengedSharerScore) {
+                outcomeText = `🎉 Congratulations! You beat ${challengedSharerName}'s score of ${challengedSharerScore}!`;
+            } else if (score === challengedSharerScore) {
+                outcomeText = `🤝 You matched ${challengedSharerName}'s score of ${challengedSharerScore}! A true competitor!`;
+            } else {
+                outcomeText = `Keep going! You didn't beat ${challengedSharerName}'s score of ${challengedSharerScore} this time.`;
+            }
+            challengeOutcomeMessage.textContent = outcomeText;
+            challengedShareId = null;
+            challengedSharerName = null;
+            challengedSharerScore = null;
+        }
+
+        function saveScoreForSharing() {
+            currentShareId = generateUUID();
+            try {
+                const sharedScores = JSON.parse(localStorage.getItem('sharedQuizScores') || '{}');
+                sharedScores[currentShareId] = {
+                    sharerName: userName,
+                    sharerScore: score,
+                    timestamp: new Date().toISOString()
+                };
+                localStorage.setItem('sharedQuizScores', JSON.stringify(sharedScores));
+            } catch (error) {
+                console.error("Could not save to localStorage. Sharing might not work.", error);
+            }
+        }
+
+        function resetQuiz() {
+            scoreCard.classList.remove('show');
+            quizAppContainer.classList.remove('show');
+            setTimeout(() => {
+                quizAppContainer.style.opacity = '0';
+                quizAppContainer.style.transform = 'translateY(20px)';
+                userNameInput.value = "";
+                challengerNameInput.value = "";
+                startScreen.classList.remove('hidden');
+                challengeIntroScreen.classList.add('hidden');
+                quizScreen.classList.add('hidden');
+                scoreCard.classList.add('hidden');
+                challengeOutcomeMessage.classList.add('hidden');
+                setTimeout(() => {
+                    quizAppContainer.classList.add('show');
+                }, 100);
+            }, 500);
+        }
+
+        // --- Share Functions ---
+        function getShareUrl() {
+            return `${window.location.origin}${window.location.pathname}?challengeId=${currentShareId}&challengeName=${encodeURIComponent(userName)}&challengeScore=${score}`;
+        }
+        function getShareText() {
+            return encodeURIComponent(`${userName} scored ${score} out of ${totalQuestionsPerSession} on the Ultimate Challenge Quiz! Can you beat my score?`);
+        }
+        
+        function setupShareListeners() {
+            const shareButtons = [
+                { el: shareWhatsappButton, getUrl: () => `https://wa.me/?text=${getShareText()}%0A${encodeURIComponent(getShareUrl())}` },
+                { el: shareFacebookButton, getUrl: () => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getShareUrl())}&quote=${getShareText()}` },
+                { el: sharePinterestButton, getUrl: () => `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(getShareUrl())}&description=${getShareText()}` },
+                { el: shareTeamsButton, getUrl: () => `https://teams.microsoft.com/share?msgText=${getShareText()}&mask=false&href=${encodeURIComponent(getShareUrl())}` }
+            ];
+            shareButtons.forEach(btn => {
+                btn.el.onclick = () => {
+                    if (!currentShareId) {
+                        showModalMessage("Please complete a quiz first to get a shareable score!");
+                        return;
+                    }
+                    window.open(btn.getUrl(), '_blank');
+                };
+            });
+        }
+
+        // --- Challenge Logic ---
+        function checkChallengeInUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('challengeId');
+            const name = urlParams.get('challengeName');
+            const scoreParam = urlParams.get('challengeScore');
+
+            if (id && name && scoreParam !== null) {
+                challengedShareId = id;
+                challengedSharerName = decodeURIComponent(name);
+                challengedSharerScore = parseInt(scoreParam);
+
+                startScreen.classList.add('hidden');
+                challengeIntroScreen.classList.remove('hidden');
+                quizAppContainer.classList.add('show');
+
+                challengerNameDisplay.textContent = challengedSharerName;
+                challengerScoreDisplay.textContent = challengedSharerScore;
+            } else {
+                startScreen.classList.remove('hidden');
+                quizAppContainer.classList.add('show');
+            }
+        }
+
+        // --- Event Listeners ---
+        window.addEventListener('load', () => {
+             checkChallengeInUrl();
+             setupShareListeners();
+        });
+        startButton.addEventListener('click', () => startGame(false));
+        startChallengeButton.addEventListener('click', () => startGame(true));
+        restartButton.addEventListener('click', resetQuiz);
+
+    </script>
+</body>
+</html>
+
