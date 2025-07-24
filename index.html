@@ -7,6 +7,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- Open Graph Meta Tags for Link Preview -->
+    <meta property="og:title" content="Challenge Exam Prep Quiz">
+    <meta property="og:description" content="Test your knowledge on Team Development, Conflict Resolution, Growth Mindset, Culture, and Addiction! Prepare for your Challenge exams with this interactive quiz.">
+    <meta property="og:image" content="https://placehold.co/1200x630/4f46e5/ffffff?text=Challenge+Quiz">
+    <meta property="og:url" content="https://pearson-cyan.vercel.app"> <!-- Updated URL -->
+    <meta property="og:type" content="website">
+    <!-- End Open Graph Meta Tags -->
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -175,14 +184,30 @@
             .social-share-buttons { flex-wrap: wrap; }
             .social-share-buttons button { width: calc(50% - 0.5rem); justify-content: center; }
         }
+
+        /* Color classes for score */
+        .text-red-600 { color: #dc2626; }
+        .text-orange-600 { color: #ea580c; }
+        .text-yellow-600 { color: #eab308; }
+        .text-lime-600 { color: #65a30d; }
+        .text-green-600 { color: #16a34a; }
+
+        /* Modal for Wrong Answers */
+        #wrong-answers-modal {
+            background-color: rgba(0, 0, 0, 0.75);
+        }
+        #wrong-answers-modal > div {
+            max-height: 90vh;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
     <div id="quiz-app" class="quiz-container show">
         <div id="start-screen" class="text-center">
-            <h1 class="text-4xl font-bold text-gray-800 mb-6">The  Challenge Try Quiz</h1>
-            <p class="text-lg text-gray-600 mb-4">Ready to test your knowledge on Team Development against the clock? Let's begin!</p>
+            <h1 class="text-4xl font-bold text-gray-800 mb-6">The Challenge Try Quiz</h1>
+            <p class="text-lg text-gray-600 mb-4">Ready to test your knowledge on various "Challenge" topics against the clock? Let's begin!</p>
             <input type="text" id="user-name-input" class="input-field" placeholder="Enter your name to start" maxlength="30">
             <button id="start-button" class="start-button">Start Quiz</button>
         </div>
@@ -190,7 +215,8 @@
         <div id="challenge-intro-screen" class="hidden text-center">
             <h1 class="text-4xl font-bold text-gray-800 mb-6">Challenge Accepted!</h1>
             <div class="challenge-info">
-                <p class="mb-2">You are challenging <span id="challenger-name-display" class="font-bold"></span>'s score of <span id="challenger-score-display" class="font-bold"></span> out of 20.</p>
+                <p class="mb-2">You are challenging <span id="challenger-name-display" class="font-bold"></span>'s score of <span id="challenger-score-display" class="font-bold"></span> out of 25.</p>
+                <p id="challenger-speed-display" class="mb-4"></p>
                 <p class="mb-4">Enter your name to take on the challenge!</p>
                 <input type="text" id="challenger-name-input" class="input-field" placeholder="Your name" maxlength="30">
             </div>
@@ -200,8 +226,8 @@
         <div id="quiz-screen" class="hidden">
             <div id="quiz-header" class="mb-6">
                  <div class="flex justify-between items-center text-gray-600 mb-2">
-                    <p id="question-count" class="text-sm font-semibold">Question 1 of 20</p>
-                    <p id="timer-text" class="text-sm font-semibold">Time: 20s</p>
+                    <p id="question-count" class="text-sm font-semibold">Question 1 of 25</p>
+                    <p id="timer-text" class="text-sm font-semibold">Time: 15s</p>
                 </div>
                 <div id="timer-container" class="w-full bg-gray-200 rounded-full h-2.5">
                      <div id="timer-bar" class="bg-gradient-to-r from-indigo-500 to-blue-500 h-2.5 rounded-full" style="width: 100%;"></div>
@@ -214,9 +240,14 @@
         <div id="score-card" class="score-card hidden">
             <div id="score-icon-display" class="score-icon"></div>
             <h3 id="score-text" class="text-3xl font-bold text-gray-800 mb-4"></h3>
+            <!-- New dashboard elements -->
+            <p id="average-speed-display" class="text-lg text-gray-600 mb-2"></p>
+            <p id="proficiency-score-display" class="text-lg font-bold mb-4"></p>
+            <!-- End new dashboard elements -->
             <p id="score-review" class="text-lg text-gray-600 mb-8"></p>
             <div id="challenge-outcome-message" class="text-xl font-semibold text-blue-700 mb-4 hidden"></div>
             <div class="flex flex-col items-center gap-4">
+                <button id="review-answers-button" class="start-button bg-purple-600 hover:bg-purple-700">Review Wrong Answers</button>
                 <button id="restart-button" class="start-button">Play Again</button>
                 <div id="share-section" class="w-full">
                     <p class="text-gray-700 font-semibold mb-2">Share your score and challenge others!</p>
@@ -231,138 +262,137 @@
         </div>
     </div>
 
-    <script>
+    <!-- Modal for Wrong Answers Review -->
+    <div id="wrong-answers-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Review Your Answers</h3>
+            <div id="wrong-answers-list">
+                <!-- Wrong answers will be injected here -->
+            </div>
+            <button class="mt-6 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" onclick="document.getElementById('wrong-answers-modal').classList.add('hidden')">Close</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase SDK Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase Variables ---
+        let app;
+        let db;
+        let auth;
+        let userId;
+        let isAuthReady = false;
+
+        // Global variables from Canvas environment (MUST BE USED)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // --- Firebase Initialization ---
+        async function initializeFirebase() {
+            if (Object.keys(firebaseConfig).length === 0) {
+                console.error("Firebase config is missing. Cannot initialize Firebase.");
+                return;
+            }
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Listen for authentication state changes
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    console.log("Authenticated with Firebase UID:", userId);
+                } else {
+                    console.log("No user signed in. Attempting anonymous sign-in.");
+                    try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                            userId = auth.currentUser.uid;
+                            console.log("Signed in with custom token:", userId);
+                        } else {
+                            await signInAnonymously(auth);
+                            userId = auth.currentUser.uid;
+                            console.warn("Using random UUID as userId due to auth failure:", userId);
+                        }
+                    } catch (error) {
+                        console.error("Firebase authentication error:", error);
+                        // Fallback if auth fails, generate a random UUID for userId
+                        userId = crypto.randomUUID();
+                        console.warn("Using random UUID as userId due to auth failure:", userId);
+                    }
+                }
+                isAuthReady = true;
+                // Call functions that depend on auth being ready
+                checkChallengeInUrl();
+            });
+        }
+
         // --- Fallback for crypto.randomUUID() ---
         function generateUUID() {
             if (typeof crypto !== 'undefined' && crypto.randomUUID) {
                 return crypto.randomUUID();
             }
+            // Fallback for environments where crypto.randomUUID is not available
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
                 var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
                 return v.toString(16);
             });
         }
 
-        // --- Quiz Questions Data (100 Questions) ---
+        // --- Quiz Questions Data (25 Questions) ---
+        // Questions are designed for individuals between 16 and 25 years of age,
+        // covering topics from the provided learning materials for the "Challenge" subject.
         const allQuestions = [
-            // Introduction to Work Teams (15 Questions)
-            { question: "What is the primary definition of a work team?", options: ["A group of people in the same building", "People working together to reach a common goal", "Individuals reporting to the same manager", "A collection of employees with similar job titles"], correctAnswer: 1, topic: "Introduction" },
-            { question: "The main purpose of forming a team is to achieve a...", options: ["Social gathering", "Common goal", "Hierarchical structure", "Personal objective"], correctAnswer: 1, topic: "Introduction" },
-            { question: "Which of the following is essential for a group to be considered a team?", options: ["Having identical skills", "Working in isolation", "A shared objective", "Being in the same physical location"], correctAnswer: 2, topic: "Introduction" },
-            { question: "The success of a team is most dependent on...", options: ["Individual brilliance", "The number of people", "Effective collaboration", "The team's name"], correctAnswer: 2, topic: "Introduction" },
-            { question: "What distinguishes a work team from a work group?", options: ["A team has a common goal and mutual accountability", "A group is always larger than a team", "Teams are temporary, groups are permanent", "There is no difference"], correctAnswer: 0, topic: "Introduction" },
-            { question: "A 'common goal' in a team context means...", options: ["Everyone has the same personal ambition", "The team is working towards a single, shared outcome", "The manager sets individual tasks", "Everyone performs the same function"], correctAnswer: 1, topic: "Introduction" },
-            { question: "Which phrase best describes teamwork?", options: ["Doing your own work quietly", "Following orders without question", "Collaborative effort to achieve a shared objective", "Competing with colleagues for the best results"], correctAnswer: 2, topic: "Introduction" },
-            { question: "What is a key benefit of working in a team?", options: ["Less individual responsibility", "Synergy, where the collective output exceeds individual efforts", "Fewer meetings", "Guaranteed success"], correctAnswer: 1, topic: "Introduction" },
-            { question: "A team's foundation is built on...", options: ["A common purpose", "Strict rules", "Individual competition", "A single leader making all decisions"], correctAnswer: 0, topic: "Introduction" },
-            { question: "When people work together effectively, they form a...", options: ["Committee", "Crowd", "Team", "Department"], correctAnswer: 2, topic: "Introduction" },
-            { question: "A team without a common goal is just a...", options: ["Highly effective unit", "Group of individuals", "Self-managed team", "Project team"], correctAnswer: 1, topic: "Introduction" },
-            { question: "The essence of a team is...", options: ["Hierarchy", "Shared purpose", "Individual assignments", "Uniformity of thought"], correctAnswer: 1, topic: "Introduction" },
-            { question: "To achieve a common goal, team members must...", options: ["Work independently", "Communicate and collaborate", "Always agree with each other", "Have the same background"], correctAnswer: 1, topic: "Introduction" },
-            { question: "What is the most critical element for team success?", options: ["A large budget", "A shared understanding of the goal", "A new office", "Advanced technology"], correctAnswer: 1, topic: "Introduction" },
-            { question: "A team is a group of people with complementary skills who are committed to a...", options: ["Common purpose and performance goals", "Strict deadline", "Manager's agenda", "Set of individual tasks"], correctAnswer: 0, topic: "Introduction" },
-            // Types of Work Teams (30 Questions)
-            { question: "A team composed of all finance officers in a company is an example of a...", options: ["Project Team", "Functional Team", "Task Force", "Self-managed Team"], correctAnswer: 1, topic: "Team Types" },
-            { question: "Which team is formed for a specific task and disbands upon completion?", options: ["Functional Team", "Project Team", "Troubleshooting Team", "Inter-working Team"], correctAnswer: 1, topic: "Team Types" },
-            { question: "An IT, HR, and Operations team collaborating to plan a new training system is a...", options: ["Functional Team", "Task Force", "Project Team", "Inter-working Team"], correctAnswer: 3, topic: "Team Types" },
-            { question: "What is the primary role of a Troubleshooting Team?", options: ["To manage a department", "To find solutions to a specific, existing issue", "To develop new products", "To handle daily operations"], correctAnswer: 1, topic: "Team Types" },
-            { question: "A production line team that handles its own quality control without a formal boss is a...", options: ["Functional Team", "Project Team", "Self-managed Team", "Task Force"], correctAnswer: 2, topic: "Team Types" },
-            { question: "Which team is characterized by being emergency-focused, fast, and effective?", options: ["Project Team", "Functional Team", "Inter-working Team", "Task Force"], correctAnswer: 3, topic: "Team Types" },
-            { question: "A team created to investigate why a product's packaging is consistently defective is a...", options: ["Self-managed Team", "Troubleshooting Team", "Functional Team", "Project Team"], correctAnswer: 1, topic: "Team Types" },
-            { question: "If members are from the same department and perform similar work, they are in a...", options: ["Inter-working Team", "Project Team", "Functional Team", "Task Force"], correctAnswer: 2, topic: "Team Types" },
-            { question: "A team assembled to handle an urgent chemical spill in a factory is a...", options: ["Project Team", "Task Force", "Self-managed Team", "Functional Team"], correctAnswer: 1, topic: "Team Types" },
-            { question: "Which team type is defined by its cross-departmental collaboration to solve problems creatively?", options: ["Functional Team", "Inter-working Team", "Troubleshooting Team", "Project Team"], correctAnswer: 1, topic: "Team Types" },
-            { question: "The key feature of a Self-managed Team is...", options: ["Having a strong, formal leader", "Being temporary", "Autonomy and self-governance", "Focusing on a single problem"], correctAnswer: 2, topic: "Team Types" },
-            { question: "A 'Project Team' has a...", options: ["Permanent role", "Specific, temporary goal", "Focus on departmental tasks", "Lack of a clear objective"], correctAnswer: 1, topic: "Team Types" },
-            { question: "A team of the 'best experts' brought together for an urgent issue is a...", options: ["Functional Team", "Task Force", "Self-managed Team", "Inter-working Team"], correctAnswer: 1, topic: "Team Types" },
-            { question: "The defining characteristic of a Functional Team is its focus on...", options: ["A specific project", "A specific department's work", "An emergency", "Self-management"], correctAnswer: 1, topic: "Team Types" },
-            { question: "Which team is NOT necessarily problem-focused but task-focused towards a specific deliverable?", options: ["Troubleshooting Team", "Task Force", "Project Team", "Inter-working Team"], correctAnswer: 2, topic: "Team Types" },
-            { question: "The Welfare Team at DTI, if it handles urgent employee needs, acts as a...", options: ["Functional Team", "Task Force", "Project Team", "Self-managed Team"], correctAnswer: 1, topic: "Team Types" },
-            { question: "A group of machine operators organizing their own work schedules and quality checks is a...", options: ["Functional Team", "Project Team", "Self-managed Team", "Troubleshooting Team"], correctAnswer: 2, topic: "Team Types" },
-            { question: "What is a primary difference between a Project Team and a Functional Team?", options: ["Project teams are permanent, Functional teams are temporary", "Project teams are temporary, Functional teams are often permanent", "Only Functional teams have leaders", "Only Project teams have goals"], correctAnswer: 1, topic: "Team Types" },
-            { question: "Which team type is most associated with innovation and creative problem-solving?", options: ["Functional Team", "Inter-working Team", "Troubleshooting Team", "Task Force"], correctAnswer: 1, topic: "Team Types" },
-            { question: "A 'Troubleshooting Team' typically...", options: ["Implements the solution themselves", "Identifies the problem and suggests solutions", "Manages the entire company", "Works on long-term strategy"], correctAnswer: 1, topic: "Team Types" },
-            { question: "The autonomy of a Self-managed Team means they...", options: ["Report to multiple managers", "Make many of their own decisions", "Ignore company policies", "Only work on one task"], correctAnswer: 1, topic: "Team Types" },
-            { question: "A team building a new website for a client is a classic example of a...", options: ["Functional Team", "Project Team", "Task Force", "Self-managed Team"], correctAnswer: 1, topic: "Team Types" },
-            { question: "If a company forms a team to decide on a new logo, it is a...", options: ["Functional Team", "Project Team", "Troubleshooting Team", "Task Force"], correctAnswer: 1, topic: "Team Types" },
-            { question: "A key characteristic of a Task Force is...", options: ["Its slow, deliberate pace", "Its long-term nature", "Its speed and focus on an urgent issue", "Its lack of a clear leader"], correctAnswer: 2, topic: "Team Types" },
-            { question: "Which team brings together diverse perspectives from different parts of the organization?", options: ["Functional Team", "Inter-working Team", "Troubleshooting Team", "Self-managed Team"], correctAnswer: 1, topic: "Team Types" },
-            { question: "A team that exists to support the ongoing operations of a single department is a...", options: ["Project Team", "Functional Team", "Task Force", "Inter-working Team"], correctAnswer: 1, topic: "Team Types" },
-            { question: "What type of team is most suitable for a short-term, high-stakes problem?", options: ["Functional Team", "Task Force", "Self-managed Team", "Project Team"], correctAnswer: 1, topic: "Team Types" },
-            { question: "Which team disbands after its goal is met?", options: ["Functional Team", "Project Team", "Self-managed Team", "A and B"], correctAnswer: 1, topic: "Team Types" },
-            { question: "In the DTI example, the Academics and Finance team collaborating is an example of...", options: ["A Functional Team", "An Inter-working Team", "A Task Force", "A Self-managed Team"], correctAnswer: 1, topic: "Team Types" },
-            { question: "Empowerment is a key ingredient for the success of which team type?", options: ["Functional Team", "Task Force", "Self-managed Team", "Troubleshooting Team"], correctAnswer: 2, topic: "Team Types" },
-            // Stages of Team Development (25 Questions)
-            { question: "What are the five stages of Tuckman's Model in order?", options: ["Forming, Storming, Norming, Performing, Adjourning", "Starting, Arguing, Agreeing, Working, Leaving", "Forming, Norming, Storming, Performing, Adjourning", "Introduction, Conflict, Resolution, Production, Conclusion"], correctAnswer: 0, topic: "Development Stages" },
-            { question: "In which stage are team members often polite and unclear about their roles?", options: ["Storming", "Norming", "Forming", "Performing"], correctAnswer: 2, topic: "Development Stages" },
-            { question: "Conflict and competition are most common in which stage?", options: ["Forming", "Storming", "Norming", "Adjourning"], correctAnswer: 1, topic: "Development Stages" },
-            { question: "When a team starts to agree on standards and establish norms, it is in the...", options: ["Forming", "Storming", "Norming", "Performing"], correctAnswer: 2, topic: "Development Stages" },
-            { question: "The team is working efficiently and achieving its goals in the... stage.", options: ["Norming", "Storming", "Performing", "Forming"], correctAnswer: 2, topic: "Development Stages" },
-            { question: "The final stage, where the team celebrates and disbands, is called...", options: ["Performing", "Forming", "Concluding", "Adjourning"], correctAnswer: 3, topic: "Development Stages" },
-            { question: "A team for a new healthcare app has just had its first meeting. Roles are unclear. This is...", options: ["Storming", "Forming", "Norming", "Performing"], correctAnswer: 1, topic: "Development Stages" },
-            { question: "If the app team starts having conflicts over the design and features, they have entered the... stage.", options: ["Forming", "Storming", "Norming", "Adjourning"], correctAnswer: 1, topic: "Development Stages" },
-            { question: "The healthcare app team finally agrees on a design standard and work process. This is the... stage.", options: ["Forming", "Storming", "Norming", "Performing"], correctAnswer: 2, topic: "Development Stages" },
-            { question: "A leader's role in the 'Forming' stage is to...", options: ["Step back and observe", "Provide clear direction and guidance", "Mediate conflicts", "Celebrate success"], correctAnswer: 1, topic: "Development Stages" },
-            { question: "During the 'Storming' stage, a leader should...", options: ["Ignore the conflict", "Facilitate communication and help resolve conflicts", "Assign more tasks", "Disband the team"], correctAnswer: 1, topic: "Development Stages" },
-            { question: "What is the main risk of the 'Storming' stage?", options: ["The team becomes too friendly", "The team may fail if conflicts are not resolved", "The work is completed too quickly", "The team loses focus on the goal"], correctAnswer: 1, topic: "Development Stages" },
-            { question: "Cohesion and unity start to build in the... stage.", options: ["Forming", "Storming", "Norming", "Adjourning"], correctAnswer: 2, topic: "Development Stages" },
-            { question: "The 'Performing' stage is characterized by...", options: ["High levels of conflict", "Uncertainty", "High performance and synergy", "The start of the project"], correctAnswer: 2, topic: "Development Stages" },
-            { question: "Why is the 'Adjourning' stage important?", options: ["It allows for recognition and closure", "It is when the work begins", "It is where conflicts are resolved", "It is the longest stage"], correctAnswer: 0, topic: "Development Stages" },
-            { question: "Which stage is also known as the 'getting to know you' stage?", options: ["Storming", "Norming", "Forming", "Performing"], correctAnswer: 2, topic: "Development Stages" },
-            { question: "A team that skips the 'Storming' stage might...", options: ["Be more effective", "Suffer from unresolved underlying conflicts later", "Finish the project faster", "Not need a leader"], correctAnswer: 1, topic: "Development Stages" },
-            { question: "In which stage does the team structure become fully functional and accepted?", options: ["Forming", "Storming", "Norming", "Performing"], correctAnswer: 3, topic: "Development Stages" },
-            { question: "A sense of loss or sadness can be common in the... stage.", options: ["Forming", "Storming", "Performing", "Adjourning"], correctAnswer: 3, topic: "Development Stages" },
-            { question: "The transition from 'Storming' to 'Norming' involves...", options: ["Creating more conflict", "Resolving differences and establishing norms", "Starting the project", "Ending the project"], correctAnswer: 1, topic: "Development Stages" },
-            { question: "A team is 'mature' and self-directing in the... stage.", options: ["Forming", "Norming", "Performing", "Storming"], correctAnswer: 2, topic: "Development Stages" },
-            { question: "What is the primary focus during the 'Forming' stage?", options: ["Task completion", "Building relationships and understanding the task", "Resolving conflict", "Celebrating achievements"], correctAnswer: 1, topic: "Development Stages" },
-            { question: "The 'Norming' stage is a result of the team's willingness to...", options: ["Give up on the goal", "Share responsibility and work together", "Ignore the leader", "Create more conflict"], correctAnswer: 1, topic: "Development Stages" },
-            { question: "Not all teams go through Tuckman's stages linearly. This statement is...", options: ["True", "False"], correctAnswer: 0, topic: "Development Stages" },
-            { question: "Tuckman's model helps teams to...", options: ["Avoid all conflict", "Understand their own development process", "Guarantee project success", "Work without a leader"], correctAnswer: 1, topic: "Development Stages" },
-            // Leadership, Empowerment, and Communication (25 Questions)
-            { question: "During a period of change, what is a leader's most important role?", options: ["To increase the workload", "To give clear direction and explain 'why'", "To keep information secret", "To avoid the team"], correctAnswer: 1, topic: "Leadership" },
-            { question: "Which of these is NOT one of the 5 things a good leader does during change?", options: ["Motivate the team", "Provide support and training", "Micromanage every task", "Communicate openly"], correctAnswer: 2, topic: "Leadership" },
-            { question: "Empowerment means...", options: ["Telling employees exactly what to do", "Trusting employees to make smart decisions", "Removing all rules", "Giving employees more work"], correctAnswer: 1, topic: "Empowerment" },
-            { question: "A leader who says 'Well done!' for effort is...", options: ["Providing support", "Giving clear direction", "Recognizing effort", "Communicating openly"], correctAnswer: 2, topic: "Leadership" },
-            { question: "Good communication in a team involves...", options: ["Cutting each other off to be more efficient", "Listening to understand, not just to reply", "Using complex jargon", "Communicating only through email"], correctAnswer: 1, topic: "Communication" },
-            { question: "The story about the misunderstood email highlights the importance of...", options: ["Writing longer emails", "Clear communication", "Avoiding email altogether", "Working in silence"], correctAnswer: 1, topic: "Communication" },
-            { question: "What is a key part of communicating openly?", options: ["Ignoring concerns", "Answering questions honestly", "Making promises you can't keep", "Sharing only good news"], correctAnswer: 1, topic: "Leadership" },
-            { question: "When a leader empowers a team, they show...", options: ["Distrust", "Control", "Trust", "Apathy"], correctAnswer: 2, topic: "Empowerment" },
-            { question: "Motivating the team during change helps to...", options: ["Increase fear and uncertainty", "Keep the team calm and focused", "Create more conflict", "Slow down the process"], correctAnswer: 1, topic: "Leadership" },
-            { question: "Listening to understand' means...", options: ["Waiting for your turn to speak", "Trying to genuinely grasp the other person's perspective", "Thinking about your reply while someone is talking", "Interrupting with questions"], correctAnswer: 1, topic: "Communication" },
-            { question: "A leader providing training for a new system is fulfilling which role?", options: ["Giving direction", "Providing support", "Recognizing effort", "Motivating"], correctAnswer: 1, topic: "Leadership" },
-            { question: "Empowerment can lead to...", options: ["More bureaucracy", "Increased employee engagement and better decisions", "Slower project completion", "Less need for a leader"], correctAnswer: 1, topic: "Empowerment" },
-            { question: "A leader who explains 'what's changing and why' is...", options: ["Giving clear direction", "Recognizing effort", "Providing support", "Empowering the team"], correctAnswer: 0, topic: "Leadership" },
-            { question: "Good communication can prevent...", options: ["The need for a leader", "Misunderstandings and delays", "Teamwork", "Change"], correctAnswer: 1, topic: "Communication" },
-            { question: "What is the opposite of empowerment?", options: ["Trust", "Micromanagement", "Delegation", "Autonomy"], correctAnswer: 1, topic: "Empowerment" },
-            { question: "A good leader during change acts as a...", options: ["Source of confusion", "Stabilizing force", "Dictator", "Passive observer"], correctAnswer: 1, topic: "Leadership" },
-            { question: "Being clear when you give instructions is a key part of...", options: ["Effective communication", "Empowerment", "Recognizing effort", "Leadership style"], correctAnswer: 0, topic: "Communication" },
-            { question: "Trust is the foundation of...", options: ["Conflict", "Micromanagement", "Empowerment", "Bureaucracy"], correctAnswer: 2, topic: "Empowerment" },
-            { question: "Answering questions honestly builds...", options: ["Fear", "Trust and open communication", "Confusion", "Hierarchy"], correctAnswer: 1, topic: "Communication" },
-            { question: "The phrase 'I trust you to take the shot' is an analogy for...", options: ["Leadership", "Teamwork", "Empowerment", "Communication"], correctAnswer: 2, topic: "Empowerment" },
-            { question: "What is the likely result of a leader who does NOT communicate openly during change?", options: ["Increased trust", "Rumors and anxiety", "Higher motivation", "Faster adaptation"], correctAnswer: 1, topic: "Leadership" },
-            { question: "Which action is a form of providing support?", options: ["Setting unrealistic goals", "Offering resources and training", "Ignoring questions", "Punishing mistakes"], correctAnswer: 1, topic: "Leadership" },
-            { question: "Empowerment allows team members to take...", options: ["More breaks", "Ownership of their work", "Blame for everything", "Instructions literally"], correctAnswer: 1, topic: "Empowerment" },
-            { question: "Active listening is a crucial skill for...", options: ["Poor communication", "Effective teamwork", "Creating conflict", "Individual work"], correctAnswer: 1, topic: "Communication" },
-            { question: "A leader's role in change is to guide the team...", options: ["Away from the goal", "Through the uncertainty", "Into more conflict", "By doing all the work themselves"], correctAnswer: 1, topic: "Leadership" },
-            // Team Dynamics and Potential Questions (5 Questions)
-            { question: "How people act, talk, and help each other within a team is called...", options: ["Team Rules", "Team Dynamics", "Team Structure", "Team Hierarchy"], correctAnswer: 1, topic: "Team Dynamics" },
-            { question: "A team member who is great at finishing things plays the role of a...", options: ["Innovator", "Encourager", "Leader", "Completer"], correctAnswer: 3, topic: "Team Dynamics" },
-            { question: "The person who has wild ideas and suggests new ways of doing things is the...", options: ["Completer", "Innovator", "Encourager", "Mediator"], correctAnswer: 1, topic: "Team Dynamics" },
-            { question: "Which role helps to keep the peace and maintain team harmony?", options: ["Innovator", "Completer", "Encourager", "Director"], correctAnswer: 2, topic: "Team Dynamics" },
-            { question: "For a team to be effective, it is most important that...", options: ["All members have the same personality", "Members understand and leverage their different roles", "The team avoids all disagreement", "There is a strict leader"], correctAnswer: 1, topic: "Team Dynamics" },
+            // People and Team Development (10 Questions)
+            { question: "What is the primary definition of a work team?", options: ["A group of people in the same building", "People working together to reach a common goal", "Individuals reporting to the same manager", "A collection of employees with similar job titles"], correctAnswer: 1, topic: "Introduction to Work Teams" },
+            { question: "Which of the following is essential for a group to be considered a team?", options: ["Having identical skills", "Working in isolation", "A shared objective", "Being in the same physical location"], correctAnswer: 2, topic: "Introduction to Work Teams" },
+            { question: "A team composed of all finance officers in a company is an example of a...", options: ["Project Team", "Functional Team", "Task Force", "Self-managed Team"], correctAnswer: 1, topic: "Types of Work Teams" },
+            { question: "Which team is formed for a specific task and disbands upon completion?", options: ["Functional Team", "Project Team", "Troubleshooting Team", "Inter-working Team"], correctAnswer: 1, topic: "Types of Work Teams" },
+            { question: "A production line team that handles its own quality control without a formal boss is a...", options: ["Functional Team", "Project Team", "Self-managed Team", "Task Force"], correctAnswer: 2, topic: "Types of Work Teams" },
+            { question: "In Tuckman's Model, which stage is characterized by conflict and competition?", options: ["Forming", "Storming", "Norming", "Adjourning"], correctAnswer: 1, topic: "Stages of Team Development" },
+            { question: "When a team starts to agree on standards and establish norms, it is in the...", options: ["Forming", "Storming", "Norming", "Performing"], correctAnswer: 2, topic: "Stages of Team Development" },
+            { question: "The final stage of Tuckman's Model, where the team celebrates and disbands, is called...", options: ["Performing", "Forming", "Concluding", "Adjourning"], correctAnswer: 3, topic: "Stages of Team Development" },
+            { question: "Empowerment in a team context means...", options: ["Telling employees exactly what to do", "Trusting employees to make smart decisions on their own", "Removing all rules", "Giving employees more work"], correctAnswer: 1, topic: "Leadership, Empowerment, Communication" },
+            { question: "Good communication in a team primarily involves...", options: ["Cutting each other off to be more efficient", "Listening to understand, not just to reply", "Using complex jargon", "Communicating only through email"], correctAnswer: 1, topic: "Leadership, Empowerment, Communication" },
+            // Conflict Resolution & Anger Management (5 Questions)
+            { question: "Conflict is generally defined as...", options: ["Always violent disagreements", "Disagreements in ideas, beliefs, or interests", "A lack of communication", "A sign of a failing team"], correctAnswer: 1, topic: "Conflict Resolution" },
+            { question: "Which type of conflict arises from differences in personal traits or styles?", options: ["Task Conflict", "Leadership Conflict", "Personality Conflict", "Value Conflict"], correctAnswer: 2, topic: "Conflict Resolution" },
+            { question: "The 'Avoiding' conflict resolution style is characterized by...", options: ["Trying to satisfy one's own concerns without regard for others", "Finding a win-win solution", "Avoiding dealing with the conflict issue", "Finding an acceptable agreement that partially satisfies both sides"], correctAnswer: 2, topic: "Conflict Resolution" },
+            { question: "Anger is a basic human emotional response typically triggered by...", options: ["Happiness or joy", "A threat, injustice, hurt, or frustration", "Complete calm", "Lack of work"], correctAnswer: 1, topic: "Anger Management" },
+            { question: "What is the primary goal of anger management?", options: ["To eliminate all feelings of anger", "To suppress anger until it disappears", "To reduce emotional feelings and physiological arousal caused by anger", "To blame others for your anger"], correctAnswer: 2, topic: "Anger Management" },
+            // Growth Mindset (3 Questions)
+            { question: "A 'Fixed Mindset' is characterized by the belief that abilities...", options: ["Can change significantly with effort", "Are inherent and cannot change", "Are only developed through formal education", "Are irrelevant to success"], correctAnswer: 1, topic: "Growth Mindset" },
+            { question: "People with a 'Growth Mindset' tend to...", options: ["Avoid challenges and stick to familiar tasks", "Believe their intelligence is set in stone", "Be open and ready to take on challenges, looking for ways to achieve goals", "Give up easily when faced with difficulties"], correctAnswer: 2, topic: "Growth Mindset" },
+            { question: "Which of the following is a benefit of having a 'Changed Mindset'?", options: ["Resistance to new ideas", "Stagnation and lack of progress", "Personal growth and flexibility", "Increased anxiety about change"], correctAnswer: 2, topic: "Growth Mindset" },
+            // Culture and Development (3 Questions)
+            { question: "According to the learning materials, 'Nature' refers to...", options: ["Anything created by human beings", "Material products of society", "Anything on earth and in the universe not created or influenced by human beings", "Social interactions and traditions"], correctAnswer: 2, topic: "Culture and Development" },
+            { question: "Culture is described as polysemous, meaning it...", options: ["Has only one strict definition", "Is only about material products", "Has more than one meaning and means different things to different people", "Is fixed and never changes"], correctAnswer: 2, topic: "Culture and Development" },
+            { question: "When habits are accepted by society, they become...", options: ["Traditions", "Rules", "Norms", "Heritage resources"], correctAnswer: 2, topic: "Culture and Development" },
+            // Addiction (4 Questions)
+            { question: "Addiction is defined as a compulsive need for and use of a habit-forming substance or activity, characterized by...", options: ["Occasional use for pleasure", "Ability to stop easily despite consequences", "Inability to stop despite harmful consequences", "Only physical dependence"], correctAnswer: 2, topic: "Addiction" },
+            { question: "Which of these is a behavioral addiction?", options: ["Alcohol", "Nicotine", "Gambling", "Prescription drugs"], correctAnswer: 2, topic: "Addiction" },
+            { question: "Addictive substances primarily impact the brain by triggering a surge in which neurotransmitter?", options: ["Serotonin", "Endorphin", "Dopamine", "Adrenaline"], correctAnswer: 2, topic: "Addiction" },
+            { question: "One of the social consequences of addiction mentioned is...", options: ["Improved physical health", "Increased financial stability", "Social isolation and damaged relationships", "Enhanced career opportunities"], correctAnswer: 2, topic: "Addiction" }
         ];
 
         let questionsToAsk = [];
         let currentQuestionIndex = 0;
         let score = 0;
-        const totalQuestionsPerSession = 20;
+        const totalQuestionsPerSession = 25;
         let userName = "Guest";
         let currentShareId = null;
         let challengedShareId = null;
         let challengedSharerName = null;
         let challengedSharerScore = null;
         let timerInterval;
-        let timeLeft = 20;
+        let timeLeft = 15; // 15 seconds per question
+        let questionStartTime; // To track time for each question
+        let totalTimeTaken = 0; // To sum up time for average speed
+        let wrongAnswersLog = []; // To store wrong answers for review
 
         // --- DOM Elements ---
         const startScreen = document.getElementById('start-screen');
@@ -370,6 +400,7 @@
         const challengeIntroScreen = document.getElementById('challenge-intro-screen');
         const challengerNameDisplay = document.getElementById('challenger-name-display');
         const challengerScoreDisplay = document.getElementById('challenger-score-display');
+        const challengerSpeedDisplay = document.getElementById('challenger-speed-display'); // New element
         const challengerNameInput = document.getElementById('challenger-name-input');
         const startChallengeButton = document.getElementById('start-challenge-button');
         const quizScreen = document.getElementById('quiz-screen');
@@ -391,6 +422,11 @@
         const shareTeamsButton = document.getElementById('share-teams');
         const shareSection = document.getElementById('share-section');
         const challengeOutcomeMessage = document.getElementById('challenge-outcome-message');
+        const averageSpeedDisplay = document.getElementById('average-speed-display'); // New element
+        const proficiencyScoreDisplay = document.getElementById('proficiency-score-display'); // New element
+        const reviewAnswersButton = document.getElementById('review-answers-button'); // New button
+        const wrongAnswersModal = document.getElementById('wrong-answers-modal'); // Modal element
+        const wrongAnswersList = document.getElementById('wrong-answers-list'); // List inside modal
 
 
         // --- SVG Icons for score card ---
@@ -422,6 +458,15 @@
             document.body.appendChild(modal);
         }
 
+        // Function to get color based on percentage for dashboard
+        function getScoreColor(percentage) {
+            if (percentage >= 90) return 'text-green-600'; // Deep Green
+            if (percentage >= 75) return 'text-lime-600'; // Lighter Green
+            if (percentage >= 50) return 'text-yellow-600'; // Yellow
+            if (percentage >= 25) return 'text-orange-600'; // Orange
+            return 'text-red-600'; // Red for bad
+        }
+
         // --- Quiz Flow Functions ---
         function startGame(isChallenge = false) {
             let nameInputSource = isChallenge ? challengerNameInput : userNameInput;
@@ -438,6 +483,8 @@
 
             currentQuestionIndex = 0;
             score = 0;
+            totalTimeTaken = 0; // Reset total time
+            wrongAnswersLog = []; // Reset wrong answers log
             currentShareId = null;
             challengeOutcomeMessage.classList.add('hidden');
 
@@ -455,7 +502,8 @@
 
         function startTimer() {
             clearInterval(timerInterval); // Clear any existing timer
-            timeLeft = 20;
+            timeLeft = 15; // Reset timer to 15 seconds
+            questionStartTime = Date.now(); // Record start time for this question
             
             // Initial UI update
             timerText.textContent = `Time: ${timeLeft}s`;
@@ -467,7 +515,7 @@
             timerInterval = setInterval(() => {
                 timeLeft--;
                 timerText.textContent = `Time: ${timeLeft}s`;
-                const percentageLeft = (timeLeft / 20) * 100;
+                const percentageLeft = (timeLeft / 15) * 100; // Calculate percentage based on 15s
                 timerBar.style.width = `${percentageLeft}%`;
 
                 if (timeLeft <= 5 && !timerBar.classList.contains('time-low-pulse')) {
@@ -483,6 +531,17 @@
         }
         
         function handleTimeout() {
+            const timeTaken = (Date.now() - questionStartTime) / 1000;
+            totalTimeTaken += timeTaken;
+
+            // Log the wrong answer due to timeout
+            const questionData = questionsToAsk[currentQuestionIndex];
+            wrongAnswersLog.push({
+                question: questionData.question,
+                userAnswer: "Timed Out / No Answer",
+                correctAnswer: questionData.options[questionData.correctAnswer]
+            });
+
             disableOptions(null); // Pass null as there's no selected button
             moveToNextQuestion();
         }
@@ -550,11 +609,22 @@
         function selectAnswer(selectedButton) {
             clearInterval(timerInterval); // Stop the timer
             
+            const timeTaken = (Date.now() - questionStartTime) / 1000; // Time taken for this question
+            totalTimeTaken += timeTaken; // Add to total
+
             const correctAnswerText = questionsToAsk[currentQuestionIndex].options[questionsToAsk[currentQuestionIndex].correctAnswer];
             const isCorrect = selectedButton.textContent === correctAnswerText;
 
             if (isCorrect) {
                 score++;
+            } else {
+                // Log the wrong answer
+                const questionData = questionsToAsk[currentQuestionIndex];
+                wrongAnswersLog.push({
+                    question: questionData.question,
+                    userAnswer: selectedButton.textContent,
+                    correctAnswer: questionData.options[questionData.correctAnswer]
+                });
             }
             // The disableOptions function will handle marking correct/incorrect
             disableOptions(selectedButton);
@@ -569,7 +639,14 @@
             shareSection.classList.remove('hidden');
 
             const scorePercentage = (score / totalQuestionsPerSession) * 100;
+            const averageSpeed = totalQuestionsPerSession > 0 ? (totalTimeTaken / totalQuestionsPerSession).toFixed(2) : 0;
+            const proficiencyScore = scorePercentage; // Using score percentage as proficiency
+
             scoreTextEl.textContent = `${userName}, you scored ${score} out of ${totalQuestionsPerSession}!`;
+            averageSpeedDisplay.textContent = `Average Speed: ${averageSpeed} seconds per question`;
+            proficiencyScoreDisplay.textContent = `Knowledge Proficiency: ${proficiencyScore.toFixed(0)}%`;
+            proficiencyScoreDisplay.className = `text-lg font-bold mb-4 ${getScoreColor(proficiencyScore)}`;
+
 
             let reviewMessage = '';
             let iconSvg = '';
@@ -595,50 +672,73 @@
             scoreIconDisplay.innerHTML = iconSvg;
 
             if (challengedShareId && challengedSharerName && challengedSharerScore !== null) {
-                handleChallengeOutcome();
+                handleChallengeOutcome(averageSpeed);
             } else {
-                saveScoreForSharing();
+                saveScoreForSharing(averageSpeed, proficiencyScore);
             }
         }
         
-        function handleChallengeOutcome() {
+        function handleChallengeOutcome(myAvgSpeed) {
             shareSection.classList.add('hidden');
             challengeOutcomeMessage.classList.remove('hidden');
             let outcomeText = "";
+            // Retrieve challenged speed from the displayed text, as it's fetched from Firestore
+            const challengedSharerAvgSpeed = parseFloat(challengerSpeedDisplay.textContent.split(': ')[1].replace(' seconds/question', ''));
+
             if (score > challengedSharerScore) {
                 outcomeText = `🎉 Congratulations! You beat ${challengedSharerName}'s score of ${challengedSharerScore}!`;
             } else if (score === challengedSharerScore) {
-                outcomeText = `🤝 You matched ${challengedSharerName}'s score of ${challengedSharerScore}! A true competitor!`;
+                if (myAvgSpeed < challengedSharerAvgSpeed) {
+                    outcomeText = `🚀 Amazing! You matched ${challengedSharerName}'s score of ${challengedSharerScore} AND were faster!`;
+                } else if (myAvgSpeed === challengedSharerAvgSpeed) {
+                    outcomeText = `🤝 You matched ${challengedSharerName}'s score of ${challengedSharerScore} and speed! A true competitor!`;
+                } else {
+                    outcomeText = `🤝 You matched ${challengedSharerName}'s score of ${challengedSharerScore}!`;
+                }
             } else {
                 outcomeText = `Keep going! You didn't beat ${challengedSharerName}'s score of ${challengedSharerScore} this time.`;
             }
             challengeOutcomeMessage.textContent = outcomeText;
+            // Reset challenge specific variables
             challengedShareId = null;
             challengedSharerName = null;
             challengedSharerScore = null;
+            challengerSpeedDisplay.textContent = ""; // Clear challenger speed display
         }
 
-        function saveScoreForSharing() {
+        async function saveScoreForSharing(avgSpeed, profScore) {
+            if (!isAuthReady || !userId) {
+                console.error("Firebase not ready or userId not available. Cannot save score.");
+                showModalMessage("Failed to save score for sharing. Firebase not ready.");
+                return;
+            }
             currentShareId = generateUUID();
+            // Path for public data: /artifacts/{appId}/public/data/{your_collection_name}/{documentId}
+            const docRef = doc(db, `artifacts/${appId}/public/data/quiz_records`, currentShareId);
             try {
-                const sharedScores = JSON.parse(localStorage.getItem('sharedQuizScores') || '{}');
-                sharedScores[currentShareId] = {
+                await setDoc(docRef, {
                     sharerName: userName,
                     sharerScore: score,
-                    timestamp: new Date().toISOString()
-                };
-                localStorage.setItem('sharedQuizScores', JSON.stringify(sharedScores));
-            } catch (error) {
-                console.error("Could not save to localStorage. Sharing might not work.", error);
+                    totalQuestions: totalQuestionsPerSession,
+                    averageSpeed: parseFloat(avgSpeed),
+                    proficiencyScore: parseFloat(profScore.toFixed(0)),
+                    timestamp: new Date().toISOString(),
+                    wrongAnswers: wrongAnswersLog // Save the log of wrong answers
+                });
+                console.log("Score saved to Firestore with ID:", currentShareId);
+            } catch (e) {
+                console.error("Error adding document to Firestore: ", e);
+                showModalMessage("Failed to save score for sharing. Please try again.");
             }
         }
 
         function resetQuiz() {
             scoreCard.classList.remove('show');
-            quizAppContainer.classList.remove('show');
+            // Ensure quizAppContainer fades out before resetting
+            quizAppContainer.classList.remove('show'); 
+            
             setTimeout(() => {
-                quizAppContainer.style.opacity = '0';
-                quizAppContainer.style.transform = 'translateY(20px)';
+                // Reset all states and hidden classes
                 userNameInput.value = "";
                 challengerNameInput.value = "";
                 startScreen.classList.remove('hidden');
@@ -646,15 +746,20 @@
                 quizScreen.classList.add('hidden');
                 scoreCard.classList.add('hidden');
                 challengeOutcomeMessage.classList.add('hidden');
-                setTimeout(() => {
-                    quizAppContainer.classList.add('show');
-                }, 100);
-            }, 500);
+                averageSpeedDisplay.textContent = ""; 
+                proficiencyScoreDisplay.textContent = ""; 
+                proficiencyScoreDisplay.classList.remove('text-red-600', 'text-orange-600', 'text-yellow-600', 'text-lime-600', 'text-green-600'); // Remove all color classes
+                proficiencyScoreDisplay.classList.add('text-lg', 'font-bold', 'mb-4'); // Re-add default classes
+                
+                // After resetting, make the quizAppContainer fade back in for the start screen
+                quizAppContainer.classList.add('show'); 
+            }, 500); // This delay matches the CSS transition duration for fade-out
         }
 
         // --- Share Functions ---
         function getShareUrl() {
-            return `${window.location.origin}${window.location.pathname}?challengeId=${currentShareId}&challengeName=${encodeURIComponent(userName)}&challengeScore=${score}`;
+            // The URL only needs the challengeId; other data will be fetched from Firestore
+            return `${window.location.origin}${window.location.pathname}?challengeId=${currentShareId}`;
         }
         function getShareText() {
             return encodeURIComponent(`${userName} scored ${score} out of ${totalQuestionsPerSession} on the Ultimate Challenge Quiz! Can you beat my score?`);
@@ -678,38 +783,92 @@
             });
         }
 
-        // --- Challenge Logic ---
-        function checkChallengeInUrl() {
+        // --- Challenge Logic (Fetching data from Firestore) ---
+        async function checkChallengeInUrl() {
+            if (!isAuthReady) {
+                // Defer execution until Firebase is initialized and authenticated
+                setTimeout(checkChallengeInUrl, 100);
+                return;
+            }
+
             const urlParams = new URLSearchParams(window.location.search);
             const id = urlParams.get('challengeId');
-            const name = urlParams.get('challengeName');
-            const scoreParam = urlParams.get('challengeScore');
 
-            if (id && name && scoreParam !== null) {
-                challengedShareId = id;
-                challengedSharerName = decodeURIComponent(name);
-                challengedSharerScore = parseInt(scoreParam);
+            if (id) {
+                // Path for public data: /artifacts/{appId}/public/data/{your_collection_name}/{documentId}
+                const docRef = doc(db, `artifacts/${appId}/public/data/quiz_records`, id);
+                try {
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        challengedShareId = id;
+                        challengedSharerName = data.sharerName;
+                        challengedSharerScore = data.sharerScore;
+                        const challengedSharerAvgSpeed = data.averageSpeed;
+                        const challengedSharerProficiency = data.proficiencyScore;
 
-                startScreen.classList.add('hidden');
-                challengeIntroScreen.classList.remove('hidden');
-                quizAppContainer.classList.add('show');
+                        startScreen.classList.add('hidden');
+                        challengeIntroScreen.classList.remove('hidden');
+                        quizAppContainer.classList.add('show');
 
-                challengerNameDisplay.textContent = challengedSharerName;
-                challengerScoreDisplay.textContent = challengedSharerScore;
+                        challengerNameDisplay.textContent = challengedSharerName;
+                        challengerScoreDisplay.textContent = challengedSharerScore;
+                        
+                        // Apply color to challenged score
+                        challengerScoreDisplay.classList.add(getScoreColor((challengedSharerScore / data.totalQuestions) * 100));
+
+                        // Display challenged speed
+                        challengerSpeedDisplay.textContent = `Average Speed: ${challengedSharerAvgSpeed} seconds/question`;
+                        
+                    } else {
+                        console.warn("Challenge ID not found in Firestore:", id);
+                        showModalMessage("The challenge link is invalid or expired.");
+                        startScreen.classList.remove('hidden');
+                        quizAppContainer.classList.add('show');
+                    }
+                } catch (e) {
+                    console.error("Error fetching challenge document from Firestore:", e);
+                    showModalMessage("Error loading challenge. Please try again.");
+                    startScreen.classList.remove('hidden');
+                    quizAppContainer.classList.add('show');
+                }
             } else {
                 startScreen.classList.remove('hidden');
                 quizAppContainer.classList.add('show');
             }
         }
 
+        // --- Wrong Answers Review Modal Functions ---
+        function showWrongAnswersModal() {
+            wrongAnswersList.innerHTML = ''; // Clear previous content
+
+            if (wrongAnswersLog.length === 0) {
+                wrongAnswersList.innerHTML = '<p class="text-gray-600">Great job! You got all questions correct or answered them all within the time limit!</p>';
+            } else {
+                wrongAnswersLog.forEach((item, index) => {
+                    const div = document.createElement('div');
+                    div.classList.add('mb-4', 'p-4', 'border', 'rounded-lg', 'bg-gray-50', 'text-left');
+                    div.innerHTML = `
+                        <p class="font-semibold text-gray-800 mb-2">Question ${index + 1}: ${item.question}</p>
+                        <p class="text-red-600 mb-1"><i class="fas fa-times-circle mr-2"></i>Your Answer: ${item.userAnswer}</p>
+                        <p class="text-green-600"><i class="fas fa-check-circle mr-2"></i>Correct Answer: ${item.correctAnswer}</p>
+                    `;
+                    wrongAnswersList.appendChild(div);
+                });
+            }
+            wrongAnswersModal.classList.remove('hidden');
+        }
+
+
         // --- Event Listeners ---
         window.addEventListener('load', () => {
-             checkChallengeInUrl();
+             initializeFirebase(); // Initialize Firebase on load
              setupShareListeners();
         });
         startButton.addEventListener('click', () => startGame(false));
         startChallengeButton.addEventListener('click', () => startGame(true));
         restartButton.addEventListener('click', resetQuiz);
+        reviewAnswersButton.addEventListener('click', showWrongAnswersModal); // Event listener for review button
 
     </script>
 </body>
