@@ -12,7 +12,7 @@
     <meta property="og:title" content="Challenge Exam Prep Quiz">
     <meta property="og:description" content="Test your knowledge on Team Development, Conflict Resolution, Growth Mindset, Culture, and Addiction! Prepare for your Challenge exams with this interactive quiz.">
     <meta property="og:image" content="https://placehold.co/1200x630/4f46e5/ffffff?text=Challenge+Quiz">
-    <meta property="og:url" content="https://pearson-cyan.vercel.app"> <!-- Updated URL -->
+    <meta property="og:url" content="https://pearson-cyan.vercel.app">
     <meta property="og:type" content="website">
     <!-- End Open Graph Meta Tags -->
 
@@ -227,7 +227,7 @@
             <div id="quiz-header" class="mb-6">
                  <div class="flex justify-between items-center text-gray-600 mb-2">
                     <p id="question-count" class="text-sm font-semibold">Question 1 of 25</p>
-                    <p id="timer-text" class="text-sm font-semibold">Time: 15s</p>
+                    <p id="timer-text" class="text-sm font-semibold">Time: 20s</p>
                 </div>
                 <div id="timer-container" class="w-full bg-gray-200 rounded-full h-2.5">
                      <div id="timer-bar" class="bg-gradient-to-r from-indigo-500 to-blue-500 h-2.5 rounded-full" style="width: 100%;"></div>
@@ -273,64 +273,7 @@
         </div>
     </div>
 
-    <script type="module">
-        // Firebase SDK Imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // --- Firebase Variables ---
-        let app;
-        let db;
-        let auth;
-        let userId;
-        let isAuthReady = false;
-
-        // Global variables from Canvas environment (MUST BE USED)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        // --- Firebase Initialization ---
-        async function initializeFirebase() {
-            if (Object.keys(firebaseConfig).length === 0) {
-                console.error("Firebase config is missing. Cannot initialize Firebase.");
-                return;
-            }
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-
-            // Listen for authentication state changes
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    console.log("Authenticated with Firebase UID:", userId);
-                } else {
-                    console.log("No user signed in. Attempting anonymous sign-in.");
-                    try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                            userId = auth.currentUser.uid;
-                            console.log("Signed in with custom token:", userId);
-                        } else {
-                            await signInAnonymously(auth);
-                            userId = auth.currentUser.uid;
-                            console.warn("Using random UUID as userId due to auth failure:", userId);
-                        }
-                    } catch (error) {
-                        console.error("Firebase authentication error:", error);
-                        // Fallback if auth fails, generate a random UUID for userId
-                        userId = crypto.randomUUID();
-                        console.warn("Using random UUID as userId due to auth failure:", userId);
-                    }
-                }
-                isAuthReady = true;
-                // Call functions that depend on auth being ready
-                checkChallengeInUrl();
-            });
-        }
-
+    <script>
         // --- Fallback for crypto.randomUUID() ---
         function generateUUID() {
             if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -384,12 +327,12 @@
         let score = 0;
         const totalQuestionsPerSession = 25;
         let userName = "Guest";
-        let currentShareId = null;
-        let challengedShareId = null;
         let challengedSharerName = null;
         let challengedSharerScore = null;
+        let challengedSharerAvgSpeed = null; // Store challenged average speed
+        let challengedSharerProficiency = null; // Store challenged proficiency
         let timerInterval;
-        let timeLeft = 15; // 15 seconds per question
+        let timeLeft = 20; // Changed to 20 seconds
         let questionStartTime; // To track time for each question
         let totalTimeTaken = 0; // To sum up time for average speed
         let wrongAnswersLog = []; // To store wrong answers for review
@@ -485,8 +428,6 @@
             score = 0;
             totalTimeTaken = 0; // Reset total time
             wrongAnswersLog = []; // Reset wrong answers log
-            currentShareId = null;
-            challengeOutcomeMessage.classList.add('hidden');
 
             shuffleArray(allQuestions);
             questionsToAsk = allQuestions.slice(0, totalQuestionsPerSession);
@@ -502,7 +443,7 @@
 
         function startTimer() {
             clearInterval(timerInterval); // Clear any existing timer
-            timeLeft = 15; // Reset timer to 15 seconds
+            timeLeft = 20; // Reset timer to 20 seconds
             questionStartTime = Date.now(); // Record start time for this question
             
             // Initial UI update
@@ -515,7 +456,7 @@
             timerInterval = setInterval(() => {
                 timeLeft--;
                 timerText.textContent = `Time: ${timeLeft}s`;
-                const percentageLeft = (timeLeft / 15) * 100; // Calculate percentage based on 15s
+                const percentageLeft = (timeLeft / 20) * 100; // Calculate percentage based on 20s
                 timerBar.style.width = `${percentageLeft}%`;
 
                 if (timeLeft <= 5 && !timerBar.classList.contains('time-low-pulse')) {
@@ -671,20 +612,17 @@
             scoreReview.textContent = reviewMessage;
             scoreIconDisplay.innerHTML = iconSvg;
 
-            if (challengedShareId && challengedSharerName && challengedSharerScore !== null) {
+            if (challengedSharerName && challengedSharerScore !== null) { // Check if in challenge mode
                 handleChallengeOutcome(averageSpeed);
-            } else {
-                saveScoreForSharing(averageSpeed, proficiencyScore);
             }
+            // No need to call saveScoreForSharing here, as sharing is now done via URL parameters
         }
         
         function handleChallengeOutcome(myAvgSpeed) {
             shareSection.classList.add('hidden');
             challengeOutcomeMessage.classList.remove('hidden');
             let outcomeText = "";
-            // Retrieve challenged speed from the displayed text, as it's fetched from Firestore
-            const challengedSharerAvgSpeed = parseFloat(challengerSpeedDisplay.textContent.split(': ')[1].replace(' seconds/question', ''));
-
+            
             if (score > challengedSharerScore) {
                 outcomeText = `🎉 Congratulations! You beat ${challengedSharerName}'s score of ${challengedSharerScore}!`;
             } else if (score === challengedSharerScore) {
@@ -699,37 +637,12 @@
                 outcomeText = `Keep going! You didn't beat ${challengedSharerName}'s score of ${challengedSharerScore} this time.`;
             }
             challengeOutcomeMessage.textContent = outcomeText;
-            // Reset challenge specific variables
-            challengedShareId = null;
+            // Reset challenge specific variables (these are read from URL, so just clear local state)
             challengedSharerName = null;
             challengedSharerScore = null;
+            challengedSharerAvgSpeed = null;
+            challengedSharerProficiency = null;
             challengerSpeedDisplay.textContent = ""; // Clear challenger speed display
-        }
-
-        async function saveScoreForSharing(avgSpeed, profScore) {
-            if (!isAuthReady || !userId) {
-                console.error("Firebase not ready or userId not available. Cannot save score.");
-                showModalMessage("Failed to save score for sharing. Firebase not ready.");
-                return;
-            }
-            currentShareId = generateUUID();
-            // Path for public data: /artifacts/{appId}/public/data/{your_collection_name}/{documentId}
-            const docRef = doc(db, `artifacts/${appId}/public/data/quiz_records`, currentShareId);
-            try {
-                await setDoc(docRef, {
-                    sharerName: userName,
-                    sharerScore: score,
-                    totalQuestions: totalQuestionsPerSession,
-                    averageSpeed: parseFloat(avgSpeed),
-                    proficiencyScore: parseFloat(profScore.toFixed(0)),
-                    timestamp: new Date().toISOString(),
-                    wrongAnswers: wrongAnswersLog // Save the log of wrong answers
-                });
-                console.log("Score saved to Firestore with ID:", currentShareId);
-            } catch (e) {
-                console.error("Error adding document to Firestore: ", e);
-                showModalMessage("Failed to save score for sharing. Please try again.");
-            }
         }
 
         function resetQuiz() {
@@ -756,11 +669,23 @@
             }, 500); // This delay matches the CSS transition duration for fade-out
         }
 
-        // --- Share Functions ---
+        // --- Share Functions (Now using URL parameters directly) ---
         function getShareUrl() {
-            // The URL only needs the challengeId; other data will be fetched from Firestore
-            return `${window.location.origin}${window.location.pathname}?challengeId=${currentShareId}`;
+            const currentAvgSpeed = totalQuestionsPerSession > 0 ? (totalTimeTaken / totalQuestionsPerSession).toFixed(2) : 0;
+            const currentProficiency = (score / totalQuestionsPerSession) * 100;
+
+            const params = new URLSearchParams();
+            params.set('challengeName', encodeURIComponent(userName));
+            params.set('challengeScore', score);
+            params.set('challengeTotal', totalQuestionsPerSession);
+            params.set('challengeSpeed', currentAvgSpeed);
+            params.set('challengeProficiency', currentProficiency.toFixed(0));
+            // Stringify wrongAnswersLog to pass it in the URL (be mindful of URL length limits for very long logs)
+            params.set('wrongAnswersLog', encodeURIComponent(JSON.stringify(wrongAnswersLog)));
+
+            return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
         }
+
         function getShareText() {
             return encodeURIComponent(`${userName} scored ${score} out of ${totalQuestionsPerSession} on the Ultimate Challenge Quiz! Can you beat my score?`);
         }
@@ -774,64 +699,54 @@
             ];
             shareButtons.forEach(btn => {
                 btn.el.onclick = () => {
-                    if (!currentShareId) {
-                        showModalMessage("Please complete a quiz first to get a shareable score!");
-                        return;
-                    }
+                    // No need for currentShareId check, as data is generated on the fly
                     window.open(btn.getUrl(), '_blank');
                 };
             });
         }
 
-        // --- Challenge Logic (Fetching data from Firestore) ---
-        async function checkChallengeInUrl() {
-            if (!isAuthReady) {
-                // Defer execution until Firebase is initialized and authenticated
-                setTimeout(checkChallengeInUrl, 100);
-                return;
-            }
-
+        // --- Challenge Logic (Fetching data from URL parameters directly) ---
+        function checkChallengeInUrl() {
             const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('challengeId');
+            
+            const name = urlParams.get('challengeName');
+            const scoreParam = urlParams.get('challengeScore');
+            const totalParam = urlParams.get('challengeTotal');
+            const speedParam = urlParams.get('challengeSpeed');
+            const proficiencyParam = urlParams.get('challengeProficiency');
+            const wrongAnswersLogParam = urlParams.get('wrongAnswersLog');
 
-            if (id) {
-                // Path for public data: /artifacts/{appId}/public/data/{your_collection_name}/{documentId}
-                const docRef = doc(db, `artifacts/${appId}/public/data/quiz_records`, id);
-                try {
-                    const docSnap = await getDoc(docRef);
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        challengedShareId = id;
-                        challengedSharerName = data.sharerName;
-                        challengedSharerScore = data.sharerScore;
-                        const challengedSharerAvgSpeed = data.averageSpeed;
-                        const challengedSharerProficiency = data.proficiencyScore;
+            if (name && scoreParam !== null && totalParam !== null && speedParam !== null && proficiencyParam !== null) {
+                challengedSharerName = decodeURIComponent(name);
+                challengedSharerScore = parseInt(scoreParam);
+                // challengedTotalQuestions = parseInt(totalParam); // Not strictly needed for display, but good to have
+                challengedSharerAvgSpeed = parseFloat(speedParam);
+                challengedSharerProficiency = parseFloat(proficiencyParam);
 
-                        startScreen.classList.add('hidden');
-                        challengeIntroScreen.classList.remove('hidden');
-                        quizAppContainer.classList.add('show');
+                startScreen.classList.add('hidden');
+                challengeIntroScreen.classList.remove('hidden');
+                quizAppContainer.classList.add('show');
 
-                        challengerNameDisplay.textContent = challengedSharerName;
-                        challengerScoreDisplay.textContent = challengedSharerScore;
-                        
-                        // Apply color to challenged score
-                        challengerScoreDisplay.classList.add(getScoreColor((challengedSharerScore / data.totalQuestions) * 100));
+                challengerNameDisplay.textContent = challengedSharerName;
+                challengerScoreDisplay.textContent = challengedSharerScore;
+                
+                // Apply color to challenged score
+                challengerScoreDisplay.classList.add(getScoreColor((challengedSharerScore / parseInt(totalParam)) * 100));
 
-                        // Display challenged speed
-                        challengerSpeedDisplay.textContent = `Average Speed: ${challengedSharerAvgSpeed} seconds/question`;
-                        
-                    } else {
-                        console.warn("Challenge ID not found in Firestore:", id);
-                        showModalMessage("The challenge link is invalid or expired.");
-                        startScreen.classList.remove('hidden');
-                        quizAppContainer.classList.add('show');
-                    }
-                } catch (e) {
-                    console.error("Error fetching challenge document from Firestore:", e);
-                    showModalMessage("Error loading challenge. Please try again.");
-                    startScreen.classList.remove('hidden');
-                    quizAppContainer.classList.add('show');
-                }
+                // Display challenged speed
+                challengerSpeedDisplay.textContent = `Average Speed: ${challengedSharerAvgSpeed} seconds/question`;
+                
+                // If wrong answers log is present in URL, we could potentially display it for the challenger,
+                // but for simplicity, we'll just parse it if needed for future features.
+                // let parsedChallengerWrongAnswers = [];
+                // try {
+                //     if (wrongAnswersLogParam) {
+                //         parsedChallengerWrongAnswers = JSON.parse(decodeURIComponent(wrongAnswersLogParam));
+                //     }
+                // } catch (e) {
+                //     console.error("Error parsing challenger's wrong answers log:", e);
+                // }
+
             } else {
                 startScreen.classList.remove('hidden');
                 quizAppContainer.classList.add('show');
@@ -862,7 +777,7 @@
 
         // --- Event Listeners ---
         window.addEventListener('load', () => {
-             initializeFirebase(); // Initialize Firebase on load
+             checkChallengeInUrl(); // Check for challenge in URL on load
              setupShareListeners();
         });
         startButton.addEventListener('click', () => startGame(false));
